@@ -110,38 +110,30 @@ def calcular_macros(alimento, gramos):
 
 def crear_cuerpo_humano(musculos_activos):
     """Crear SVG del cuerpo humano"""
+    hombros_color = "#1F1F1F" if "Hombros" in musculos_activos else "#E8E8E8"
+    pecho_color = "#1F1F1F" if "Pecho" in musculos_activos else "#E8E8E8"
+    espalda_color = "#1F1F1F" if "Espalda" in musculos_activos else "#E8E8E8"
+    core_color = "#1F1F1F" if "Core" in musculos_activos else "#E8E8E8"
+    cuads_color = "#1F1F1F" if "Cuádriceps" in musculos_activos else "#E8E8E8"
+    gluteos_color = "#1F1F1F" if "Glúteos" in musculos_activos else "#E8E8E8"
+    biceps_color = "#1F1F1F" if "Bíceps" in musculos_activos else "#E8E8E8"
+    isquios_color = "#1F1F1F" if "Isquiotibiales" in musculos_activos else "#E8E8E8"
+    
     svg = f"""
-    <svg viewBox="0 0 200 400" style="width:100%; max-width:200px;">
-        <!-- Cabeza -->
-        <circle cx="100" cy="40" r="20" fill="#E8E8E8" stroke="#1F1F1F"/>
-        
-        <!-- Hombros/Trapecios -->
-        <ellipse cx="100" cy="70" rx="45" ry="15" fill="{'#1F1F1F' if 'Hombros' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        
-        <!-- Pecho -->
-        <rect x="75" y="85" width="50" height="40" rx="5" fill="{'#1F1F1F' if 'Pecho' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        
-        <!-- Espalda (simulado con sombreado) -->
-        <rect x="75" y="130" width="50" height="30" rx="5" fill="{'#1F1F1F' if 'Espalda' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        
-        <!-- Abdomen -->
-        <rect x="80" y="165" width="40" height="40" rx="3" fill="{'#1F1F1F' if 'Core' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        
-        <!-- Muslos/Cuádriceps -->
-        <rect x="70" y="215" width="25" height="80" rx="5" fill="{'#1F1F1F' if 'Cuádriceps' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        <rect x="105" y="215" width="25" height="80" rx="5" fill="{'#1F1F1F' if 'Cuádriceps' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        
-        <!-- Glúteos -->
-        <ellipse cx="87" cy="210" rx="18" ry="22" fill="{'#1F1F1F' if 'Glúteos' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        <ellipse cx="113" cy="210" rx="18" ry="22" fill="{'#1F1F1F' if 'Glúteos' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        
-        <!-- Bíceps (brazos) -->
-        <rect x="45" y="90" width="20" height="60" rx="5" fill="{'#1F1F1F' if 'Bíceps' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        <rect x="135" y="90" width="20" height="60" rx="5" fill="{'#1F1F1F' if 'Bíceps' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        
-        <!-- Isquiotibiales (posterior muslo) -->
-        <rect x="70" y="280" width="25" height="20" rx="3" fill="{'#1F1F1F' if 'Isquiotibiales' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
-        <rect x="105" y="280" width="25" height="20" rx="3" fill="{'#1F1F1F' if 'Isquiotibiales' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+    <svg viewBox="0 0 200 400" style="width:100%; max-width:200px; margin:0 auto;">
+        <circle cx="100" cy="40" r="20" fill="#E8E8E8" stroke="#1F1F1F" stroke-width="2"/>
+        <ellipse cx="100" cy="70" rx="45" ry="15" fill="{hombros_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="75" y="85" width="50" height="40" rx="5" fill="{pecho_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="75" y="130" width="50" height="30" rx="5" fill="{espalda_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="80" y="165" width="40" height="40" rx="3" fill="{core_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="70" y="215" width="25" height="80" rx="5" fill="{cuads_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="105" y="215" width="25" height="80" rx="5" fill="{cuads_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <ellipse cx="87" cy="210" rx="18" ry="22" fill="{gluteos_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <ellipse cx="113" cy="210" rx="18" ry="22" fill="{gluteos_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="45" y="90" width="20" height="60" rx="5" fill="{biceps_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="135" y="90" width="20" height="60" rx="5" fill="{biceps_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="70" y="280" width="25" height="20" rx="3" fill="{isquios_color}" stroke="#1F1F1F" stroke-width="2"/>
+        <rect x="105" y="280" width="25" height="20" rx="3" fill="{isquios_color}" stroke="#1F1F1F" stroke-width="2"/>
     </svg>
     """
     return svg
@@ -377,20 +369,38 @@ elif pagina == "Registros":
         
         registros_ejercicios = []
         
-        for ejercicio, musculo, series_default, reps_default in detalles_ent["ejercicios"]:
-            with st.expander(f"**{ejercicio}**"):
+        for i, (ejercicio, musculo, series_default, reps_default) in enumerate(detalles_ent["ejercicios"]):
+            with st.expander(f"**{i+1}. {ejercicio}**"):
                 col1, col2, col3 = st.columns(3)
+                
+                # Extraer número de series del formato "4x8-10"
+                series_num = int(series_default.split("x")[0]) if "x" in series_default else 4
+                
                 with col1:
-                    series_realizadas = st.number_input(f"Series de {ejercicio}", value=int(series_default.split("x")[0]), key=f"series_{ejercicio}")
+                    series_realizadas = st.number_input(
+                        f"Series", 
+                        value=series_num, 
+                        min_value=1,
+                        key=f"series_{i}"
+                    )
                 with col2:
-                    reps_realizadas = st.text_input(f"Reps de {ejercicio}", value=reps_default, key=f"reps_{ejercicio}")
+                    reps_realizadas = st.text_input(
+                        f"Reps (ej: 8-10)", 
+                        value=reps_default, 
+                        key=f"reps_{i}"
+                    )
                 with col3:
-                    peso_usado = st.number_input(f"Peso (kg) - {ejercicio}", value=0.0, step=2.5, key=f"peso_{ejercicio}")
+                    peso_usado = st.number_input(
+                        f"Peso (kg)", 
+                        value=0.0, 
+                        step=2.5, 
+                        key=f"peso_{i}"
+                    )
                 
                 registros_ejercicios.append({
                     "ejercicio": ejercicio,
                     "musculo": musculo,
-                    "series": series_realizadas,
+                    "series": int(series_realizadas),
                     "reps": reps_realizadas,
                     "peso": peso_usado
                 })
