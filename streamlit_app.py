@@ -58,8 +58,13 @@ DIETAS = {
             "principales": [("Avena", 60), ("Huevo", 100), ("Leche entera", 200), ("Plátano", 120)],
             "alternativas": {
                 "Plátano": ["Manzana"],
-                "Leche entera": ["Leche deslactosada"],
+                "Leche entera": ["Leche entera"],
             }
+        },
+        "media_mañana": {
+            "nombre": "Yogur Griego + Frutos",
+            "principales": [("Yogur griego", 200), ("Plátano", 100)],
+            "alternativas": {}
         },
         "comida": {
             "nombre": "Arroz + Pollo + Verduras",
@@ -68,6 +73,11 @@ DIETAS = {
                 "Pechuga pollo": ["Carne magra", "Atún"],
             }
         },
+        "merienda": {
+            "nombre": "Pan + Atún + Aguacate",
+            "principales": [("Pan integral", 60), ("Atún", 150), ("Aguacate", 50)],
+            "alternativas": {}
+        },
         "cena": {
             "nombre": "Carne + Tubérculo",
             "principales": [("Carne magra", 200), ("Camote", 150)],
@@ -75,6 +85,155 @@ DIETAS = {
                 "Camote": ["Papa"],
                 "Carne magra": ["Salmon"],
             }
+        },
+        "pre_dormir": {
+            "nombre": "Leche Entera",
+            "principales": [("Leche entera", 250)],
+            "alternativas": {}
+        }
+    },
+    "Carnes Rojas": {
+        "desayuno": {
+            "nombre": "Pan + Huevo + Fruta",
+            "principales": [("Pan integral", 80), ("Huevo", 100), ("Manzana", 150)],
+            "alternativas": {
+                "Manzana": ["Plátano"],
+            }
+        },
+        "media_mañana": {
+            "nombre": "Yogur + Frutos",
+            "principales": [("Yogur griego", 200), ("Plátano", 100)],
+            "alternativas": {}
+        },
+        "comida": {
+            "nombre": "Arroz + Carne + Verduras",
+            "principales": [("Arroz integral", 150), ("Carne magra", 220), ("Brócoli", 150)],
+            "alternativas": {
+                "Carne magra": ["Pechuga pollo"],
+            }
+        },
+        "merienda": {
+            "nombre": "Pan + Queso + Aguacate",
+            "principales": [("Pan integral", 60), ("Aguacate", 80)],
+            "alternativas": {}
+        },
+        "cena": {
+            "nombre": "Lomo + Tubérculo",
+            "principales": [("Carne magra", 220), ("Camote", 150)],
+            "alternativas": {
+                "Camote": ["Papa"],
+            }
+        },
+        "pre_dormir": {
+            "nombre": "Yogur Griego",
+            "principales": [("Yogur griego", 250)],
+            "alternativas": {}
+        }
+    },
+    "Pescado": {
+        "desayuno": {
+            "nombre": "Avena + Claras + Fruta",
+            "principales": [("Avena", 70), ("Claras de huevo", 200), ("Leche entera", 180), ("Plátano", 120)],
+            "alternativas": {}
+        },
+        "media_mañana": {
+            "nombre": "Yogur + Frutos",
+            "principales": [("Yogur griego", 200), ("Manzana", 100)],
+            "alternativas": {}
+        },
+        "comida": {
+            "nombre": "Pasta + Salmón + Verduras",
+            "principales": [("Pasta integral", 150), ("Salmon", 200), ("Brócoli", 150)],
+            "alternativas": {}
+        },
+        "merienda": {
+            "nombre": "Pan + Atún + Aguacate",
+            "principales": [("Pan integral", 70), ("Atún", 150), ("Aguacate", 60)],
+            "alternativas": {}
+        },
+        "cena": {
+            "nombre": "Tilapia + Tubérculo",
+            "principales": [("Salmon", 200), ("Camote", 150)],
+            "alternativas": {
+                "Camote": ["Papa"],
+            }
+        },
+        "pre_dormir": {
+            "nombre": "Leche Entera",
+            "principales": [("Leche entera", 250)],
+            "alternativas": {}
+        }
+    },
+    "Vegetariana": {
+        "desayuno": {
+            "nombre": "Avena + Leche + Frutos",
+            "principales": [("Avena", 70), ("Leche entera", 250), ("Manzana", 120)],
+            "alternativas": {}
+        },
+        "media_mañana": {
+            "nombre": "Yogur + Plátano",
+            "principales": [("Yogur griego", 200), ("Plátano", 100)],
+            "alternativas": {}
+        },
+        "comida": {
+            "nombre": "Pasta + Lentejas + Verduras",
+            "principales": [("Pasta integral", 150), ("Lentejas", 200), ("Brócoli", 150)],
+            "alternativas": {}
+        },
+        "merienda": {
+            "nombre": "Pan + Garbanzos",
+            "principales": [("Pan integral", 60), ("Garbanzos", 150)],
+            "alternativas": {}
+        },
+        "cena": {
+            "nombre": "Tofu + Tubérculo + Ensalada",
+            "principales": [("Tofu", 250), ("Camote", 150)],
+            "alternativas": {
+                "Camote": ["Papa"],
+            }
+        },
+        "pre_dormir": {
+            "nombre": "Leche + Cereales",
+            "principales": [("Leche entera", 250)],
+            "alternativas": {}
+        }
+    },
+    "Equilibrada": {
+        "desayuno": {
+            "nombre": "Avena + Huevo + Fruta",
+            "principales": [("Avena", 65), ("Huevo", 100), ("Leche entera", 200), ("Manzana", 100)],
+            "alternativas": {
+                "Manzana": ["Plátano"],
+            }
+        },
+        "media_mañana": {
+            "nombre": "Yogur + Plátano",
+            "principales": [("Yogur griego", 200), ("Plátano", 100)],
+            "alternativas": {}
+        },
+        "comida": {
+            "nombre": "Arroz + Pollo + Verduras",
+            "principales": [("Arroz integral", 150), ("Pechuga pollo", 180), ("Brócoli", 150)],
+            "alternativas": {
+                "Pechuga pollo": ["Salmon"],
+            }
+        },
+        "merienda": {
+            "nombre": "Pan + Atún + Aguacate",
+            "principales": [("Pan integral", 60), ("Atún", 150), ("Aguacate", 50)],
+            "alternativas": {}
+        },
+        "cena": {
+            "nombre": "Salmón + Tubérculo",
+            "principales": [("Salmon", 180), ("Camote", 150)],
+            "alternativas": {
+                "Camote": ["Papa"],
+            }
+        },
+        "pre_dormir": {
+            "nombre": "Leche Entera",
+            "principales": [("Leche entera", 250)],
+            "alternativas": {}
         }
     }
 }
@@ -485,7 +644,7 @@ elif pagina == "Registros":
         tren = st.selectbox("Tren", list(ENTRENAMIENTOS.keys()))
         duracion = st.number_input("Duración (min)", value=60)
         
-        if st.button("Guardar Entrenamiento"):
+        if st.button("💾 Guardar Entrenamiento"):
             st.session_state.registros_entrenamiento.append({
                 "fecha": str(fecha_ent),
                 "hora": str(hora_ent),
