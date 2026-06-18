@@ -1,197 +1,169 @@
 import streamlit as st
 import pandas as pd
 import json
-from datetime import datetime
+import os
+from datetime import datetime, timedelta
 import plotly.graph_objects as go
 import plotly.express as px
-import numpy as np
+from collections import defaultdict
 
-st.set_page_config(
-    page_title="Coach Nutriólogo Pro",
-    page_icon="💪",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.set_page_config(page_title="Coach Nutriólogo Pro", page_icon="💪", layout="wide", initial_sidebar_state="expanded")
 
-# ========== PALETA MINIMALISTA PROFESIONAL ==========
+# ========== ESTILOS MINIMALISTAS ==========
 st.markdown("""
 <style>
     * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     body { background-color: #FAFAFA; color: #1F1F1F; }
     .main { background-color: #FAFAFA; }
     .stSidebar { background-color: #FFFFFF; border-right: 1px solid #E8E8E8; }
-    h1 { color: #1F1F1F; font-size: 2.2rem; font-weight: 600; margin-bottom: 0.5rem; }
+    h1 { color: #1F1F1F; font-size: 2.2rem; font-weight: 600; }
     h2 { color: #1F1F1F; font-size: 1.5rem; font-weight: 600; margin: 1.5rem 0 1rem 0; }
     h3 { color: #424242; font-size: 1.1rem; font-weight: 500; }
-    
-    .stat-box {
-        background: #FFFFFF;
-        border: 1px solid #E8E8E8;
-        border-radius: 12px;
-        padding: 1.2rem;
-        text-align: center;
-        transition: all 0.2s;
-    }
-    
-    .stat-box:hover { border-color: #1F1F1F; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-    .stat-value { font-size: 2rem; font-weight: 700; color: #1F1F1F; margin: 0.5rem 0; }
-    .stat-label { font-size: 0.85rem; color: #757575; text-transform: uppercase; letter-spacing: 0.5px; }
-    
-    .stButton > button {
-        background-color: #1F1F1F;
-        color: #FFFFFF;
-        border: none;
-        border-radius: 8px;
-        padding: 0.8rem 1.5rem;
-        font-weight: 600;
-        width: 100%;
-    }
+    .stat-box { background: #FFFFFF; border: 1px solid #E8E8E8; border-radius: 12px; padding: 1.2rem; text-align: center; }
+    .stat-value { font-size: 2rem; font-weight: 700; color: #1F1F1F; }
+    .stat-label { font-size: 0.85rem; color: #757575; text-transform: uppercase; }
+    .stButton > button { background-color: #1F1F1F; color: #FFFFFF; width: 100%; border-radius: 8px; }
     .stButton > button:hover { background-color: #424242; }
-    
-    .meal-item {
-        background: #FFFFFF;
-        border-left: 3px solid #1F1F1F;
-        padding: 1rem;
-        border-radius: 8px;
-        margin: 0.8rem 0;
-    }
-    
-    .exercise-item {
-        background: #FFFFFF;
-        border: 1px solid #E8E8E8;
-        padding: 1.2rem;
-        border-radius: 12px;
-        margin: 1rem 0;
-    }
-    
-    .exercise-item h4 { color: #1F1F1F; margin: 0 0 0.5rem 0; }
-    .exercise-meta { color: #757575; font-size: 0.9rem; }
-    
-    .progress-box {
-        background: linear-gradient(135deg, #1F1F1F 0%, #424242 100%);
-        color: #FFFFFF;
-        padding: 1.5rem;
-        border-radius: 12px;
-        text-align: center;
-    }
-    
-    .progress-value { font-size: 3rem; font-weight: 700; }
-    .progress-label { font-size: 0.9rem; opacity: 0.9; margin-top: 0.5rem; }
-    
-    .tab-label { font-weight: 500; color: #424242; }
-    [aria-selected="true"] .tab-label { color: #1F1F1F; border-bottom: 2px solid #1F1F1F; }
+    .meal-item { background: #FFFFFF; border-left: 3px solid #1F1F1F; padding: 1rem; border-radius: 8px; margin: 0.8rem 0; }
+    .exercise-item { background: #FFFFFF; border: 1px solid #E8E8E8; padding: 1.2rem; border-radius: 12px; margin: 1rem 0; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.5rem; margin: 1rem 0; }
+    .calendar-day { background: #FFFFFF; border: 1px solid #E8E8E8; padding: 0.8rem; border-radius: 8px; text-align: center; font-size: 0.8rem; }
+    .calendar-day.active { background: #1F1F1F; color: white; }
+    .calendar-day.partial { background: #E8E8E8; }
 </style>
 """, unsafe_allow_html=True)
 
-# ========== DIETAS ==========
+# ========== BASE DE DATOS DE ALIMENTOS (GRAMOS/100g) ==========
+ALIMENTOS = {
+    "Avena": {"kcal": 389, "p": 17, "c": 66, "g": 7},
+    "Huevo": {"kcal": 155, "p": 13, "c": 1.1, "g": 11},
+    "Plátano": {"kcal": 89, "p": 1.1, "c": 23, "g": 0.3},
+    "Leche entera": {"kcal": 64, "p": 3.2, "c": 4.8, "g": 3.6},
+    "Yogur griego": {"kcal": 59, "p": 10, "c": 3.3, "g": 0.4},
+    "Pechuga pollo": {"kcal": 165, "p": 31, "c": 0, "g": 3.6},
+    "Arroz integral": {"kcal": 112, "p": 2.6, "c": 24, "g": 0.9},
+    "Brócoli": {"kcal": 34, "p": 2.8, "c": 7, "g": 0.4},
+    "Camote": {"kcal": 86, "p": 1.6, "c": 20, "g": 0.1},
+    "Atún": {"kcal": 132, "p": 29, "c": 0, "g": 1.3},
+    "Aguacate": {"kcal": 160, "p": 2, "c": 9, "g": 15},
+    "Carne magra": {"kcal": 250, "p": 26, "c": 0, "g": 15},
+    "Salmon": {"kcal": 208, "p": 20, "c": 0, "g": 13},
+    "Lentejas": {"kcal": 116, "p": 9, "c": 20, "g": 0.4},
+    "Pan integral": {"kcal": 265, "p": 9, "c": 49, "g": 3.3},
+}
+
 DIETAS = {
     "Pollo": {
-        "desayuno": {"comida": "Avena + Huevos + Plátano", "kcal": 520, "p": 25, "c": 65, "g": 18},
-        "media_mañana": {"comida": "Yogur Griego + Granola", "kcal": 320, "p": 22, "c": 35, "g": 12},
-        "comida": {"comida": "Arroz + Pechuga + Brócoli", "kcal": 720, "p": 50, "c": 75, "g": 18},
-        "merienda": {"comida": "Pan Integral + Atún", "kcal": 380, "p": 30, "c": 35, "g": 15},
-        "cena": {"comida": "Pechuga + Camote + Ensalada", "kcal": 520, "p": 45, "c": 60, "g": 12},
-        "pre_dormir": {"comida": "Leche + Cereal", "kcal": 300, "p": 30, "c": 20, "g": 10}
-    },
-    "Carnes Rojas": {
-        "desayuno": {"comida": "Panqueques Avena + Huevo", "kcal": 530, "p": 28, "c": 68, "g": 12},
-        "media_mañana": {"comida": "Manzana + Almendras", "kcal": 320, "p": 20, "c": 38, "g": 14},
-        "comida": {"comida": "Carne Magra + Papas", "kcal": 720, "p": 48, "c": 76, "g": 20},
-        "merienda": {"comida": "Sándwich Jamón + Queso", "kcal": 380, "p": 32, "c": 34, "g": 16},
-        "cena": {"comida": "Lomo + Batata + Ensalada", "kcal": 520, "p": 46, "c": 58, "g": 14},
-        "pre_dormir": {"comida": "Yogur Griego + Granola", "kcal": 300, "p": 28, "c": 22, "g": 10}
-    },
-    "Pescado": {
-        "desayuno": {"comida": "Tortillas + Huevo + Aguacate", "kcal": 520, "p": 26, "c": 62, "g": 19},
-        "media_mañana": {"comida": "Batido Plátano + Proteína", "kcal": 320, "p": 28, "c": 36, "g": 8},
-        "comida": {"comida": "Salmón + Arroz Integral", "kcal": 730, "p": 46, "c": 74, "g": 22},
-        "merienda": {"comida": "Galletas Integrales + PB", "kcal": 370, "p": 26, "c": 42, "g": 14},
-        "cena": {"comida": "Tilapia + Papas + Espinacas", "kcal": 520, "p": 42, "c": 62, "g": 13},
-        "pre_dormir": {"comida": "Leche + Caseína", "kcal": 300, "p": 32, "c": 18, "g": 10}
+        "desayuno": {"nombre": "Avena + Huevos + Plátano", "alimentos": [("Avena", 60), ("Huevo", 100), ("Leche entera", 200), ("Plátano", 120)]},
+        "media_mañana": {"nombre": "Yogur + Frutos", "alimentos": [("Yogur griego", 200), ("Plátano", 100)]},
+        "comida": {"nombre": "Arroz + Pollo + Brócoli", "alimentos": [("Arroz integral", 150), ("Pechuga pollo", 200), ("Brócoli", 150)]},
+        "merienda": {"nombre": "Pan + Atún", "alimentos": [("Pan integral", 60), ("Atún", 150), ("Aguacate", 50)]},
+        "cena": {"nombre": "Carne + Camote", "alimentos": [("Carne magra", 200), ("Camote", 150)]},
+        "pre_dormir": {"nombre": "Leche", "alimentos": [("Leche entera", 250)]}
     }
 }
 
-# ========== ENTRENAMIENTOS CON PRIORIDAD TREN INFERIOR ==========
 ENTRENAMIENTOS = {
-    "Tren Inferior A": {
-        "enfoque": "Cuádriceps + Glúteos",
-        "duracion": 70,
-        "ejercicios": [
-            {"nombre": "Sentadilla Barra", "series": "4x8-10", "notas": "Ejercicio principal", "musculo": "Cuádriceps/Glúteos"},
-            {"nombre": "Prensa de Pierna", "series": "4x10-12", "notas": "Volumen", "musculo": "Cuádriceps"},
-            {"nombre": "Leg Press Inclinado", "series": "3x12-15", "notas": "Glúteos énfasis", "musculo": "Glúteos"},
-            {"nombre": "Extensiones Cuádriceps", "series": "3x12-15", "notas": "Aislamiento", "musculo": "Cuádriceps"},
-            {"nombre": "Pantorrillas", "series": "4x15-20", "notas": "Gemelos", "musculo": "Pantorrillas"},
-        ]
-    },
-    "Tren Superior A": {
-        "enfoque": "Empuje (Pecho, Hombros, Tríceps)",
-        "duracion": 55,
-        "ejercicios": [
-            {"nombre": "Press Banca Plano", "series": "4x8-10", "notas": "Principal", "musculo": "Pecho"},
-            {"nombre": "Prensa Militar", "series": "3x10-12", "notas": "Hombros", "musculo": "Hombros"},
-            {"nombre": "Aperturas Polea", "series": "3x12-15", "notas": "Aislamiento", "musculo": "Pecho"},
-            {"nombre": "Elevaciones Laterales", "series": "3x12-15", "notas": "Deltoides", "musculo": "Hombros"},
-            {"nombre": "Barra Rizada", "series": "3x10-12", "notas": "Bíceps", "musculo": "Bíceps"},
-        ]
-    },
-    "Tren Inferior B": {
-        "enfoque": "Isquiotibiales + Glúteos",
-        "duracion": 70,
-        "ejercicios": [
-            {"nombre": "Peso Muerto Rumano", "series": "4x8-10", "notas": "Principal isquios", "musculo": "Isquiotibiales"},
-            {"nombre": "Zancadas Mancuernas", "series": "3x12c/p", "notas": "Unilateral", "musculo": "Glúteos/Isquios"},
-            {"nombre": "Empuje de Cadera", "series": "4x12-15", "notas": "Glúteos máximo", "musculo": "Glúteos"},
-            {"nombre": "Curl Femoral Tumbado", "series": "3x12-15", "notas": "Aislamiento", "musculo": "Isquiotibiales"},
-            {"nombre": "Abducción Máquina", "series": "3x15-20", "notas": "Glúteo medio", "musculo": "Glúteos"},
-        ]
-    },
-    "Tren Superior B": {
-        "enfoque": "Jalón (Espalda, Tríceps, Bíceps)",
-        "duracion": 55,
-        "ejercicios": [
-            {"nombre": "Remo Barra", "series": "4x8-10", "notas": "Principal espalda", "musculo": "Espalda"},
-            {"nombre": "Jalón al Pecho", "series": "3x10-12", "notas": "Lats", "musculo": "Espalda"},
-            {"nombre": "Remo Polea Baja", "series": "3x12-15", "notas": "Espalda media", "musculo": "Espalda"},
-            {"nombre": "Press Banca Inclinado", "series": "3x10-12", "notas": "Pecho/Tríceps", "musculo": "Pecho"},
-            {"nombre": "Extensión Tríceps", "series": "3x12-15", "notas": "Aislamiento", "musculo": "Tríceps"},
-        ]
-    }
+    "Tren Inferior A": {"musculos": ["Cuádriceps", "Glúteos"], "duracion": 70, "ejercicios": [
+        ("Sentadilla Barra", "Cuádriceps", 4, "8-10"),
+        ("Prensa Pierna", "Cuádriceps", 4, "10-12"),
+        ("Empuje Cadera", "Glúteos", 4, "12-15"),
+        ("Extensiones", "Cuádriceps", 3, "12-15"),
+    ]},
+    "Tren Superior A": {"musculos": ["Pecho", "Hombros"], "duracion": 55, "ejercicios": [
+        ("Press Banca", "Pecho", 4, "8-10"),
+        ("Prensa Militar", "Hombros", 3, "10-12"),
+        ("Aperturas", "Pecho", 3, "12-15"),
+    ]},
+    "Tren Inferior B": {"musculos": ["Isquiotibiales", "Glúteos"], "duracion": 70, "ejercicios": [
+        ("Peso Muerto Rumano", "Isquiotibiales", 4, "8-10"),
+        ("Zancadas", "Glúteos", 3, "12-15"),
+        ("Curl Femoral", "Isquiotibiales", 3, "12-15"),
+    ]},
+    "Tren Superior B": {"musculos": ["Espalda", "Bíceps"], "duracion": 55, "ejercicios": [
+        ("Remo Barra", "Espalda", 4, "8-10"),
+        ("Jalón", "Espalda", 3, "10-12"),
+        ("Barra Rizada", "Bíceps", 3, "10-12"),
+    ]}
 }
 
 # ========== INICIALIZAR SESSION ==========
+if "registros_nutricion" not in st.session_state:
+    st.session_state.registros_nutricion = []
+if "registros_entrenamiento" not in st.session_state:
+    st.session_state.registros_entrenamiento = []
+if "peso_actual" not in st.session_state:
+    st.session_state.peso_actual = 70.0
 if "dieta" not in st.session_state:
     st.session_state.dieta = "Pollo"
-if "progreso" not in st.session_state:
-    st.session_state.progreso = []
-if "dias_entreno" not in st.session_state:
-    st.session_state.dias_entreno = {"lunes": True, "martes": True, "miercoles": False, "jueves": True, "viernes": True, "sabado": False, "domingo": False}
 
-# ========== HEADER MINIMALISTA ==========
+# ========== FUNCIONES AUXILIARES ==========
+def calcular_macros(alimento, gramos):
+    """Calcular macros basado en gramos"""
+    info = ALIMENTOS[alimento]
+    return {
+        "kcal": round((info["kcal"] * gramos) / 100, 1),
+        "p": round((info["p"] * gramos) / 100, 1),
+        "c": round((info["c"] * gramos) / 100, 1),
+        "g": round((info["g"] * gramos) / 100, 1),
+    }
+
+def crear_cuerpo_humano(musculos_activos):
+    """Crear SVG del cuerpo humano"""
+    svg = f"""
+    <svg viewBox="0 0 200 400" style="width:100%; max-width:200px;">
+        <!-- Cabeza -->
+        <circle cx="100" cy="40" r="20" fill="#E8E8E8" stroke="#1F1F1F"/>
+        
+        <!-- Hombros/Trapecios -->
+        <ellipse cx="100" cy="70" rx="45" ry="15" fill="{'#1F1F1F' if 'Hombros' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        
+        <!-- Pecho -->
+        <rect x="75" y="85" width="50" height="40" rx="5" fill="{'#1F1F1F' if 'Pecho' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        
+        <!-- Espalda (simulado con sombreado) -->
+        <rect x="75" y="130" width="50" height="30" rx="5" fill="{'#1F1F1F' if 'Espalda' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        
+        <!-- Abdomen -->
+        <rect x="80" y="165" width="40" height="40" rx="3" fill="{'#1F1F1F' if 'Core' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        
+        <!-- Muslos/Cuádriceps -->
+        <rect x="70" y="215" width="25" height="80" rx="5" fill="{'#1F1F1F' if 'Cuádriceps' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        <rect x="105" y="215" width="25" height="80" rx="5" fill="{'#1F1F1F' if 'Cuádriceps' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        
+        <!-- Glúteos -->
+        <ellipse cx="87" cy="210" rx="18" ry="22" fill="{'#1F1F1F' if 'Glúteos' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        <ellipse cx="113" cy="210" rx="18" ry="22" fill="{'#1F1F1F' if 'Glúteos' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        
+        <!-- Bíceps (brazos) -->
+        <rect x="45" y="90" width="20" height="60" rx="5" fill="{'#1F1F1F' if 'Bíceps' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        <rect x="135" y="90" width="20" height="60" rx="5" fill="{'#1F1F1F' if 'Bíceps' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        
+        <!-- Isquiotibiales (posterior muslo) -->
+        <rect x="70" y="280" width="25" height="20" rx="3" fill="{'#1F1F1F' if 'Isquiotibiales' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+        <rect x="105" y="280" width="25" height="20" rx="3" fill="{'#1F1F1F' if 'Isquiotibiales' in musculos_activos else '#E8E8E8'}" stroke="#1F1F1F"/>
+    </svg>
+    """
+    return svg
+
+# ========== HEADER ==========
 st.markdown("# Coach Nutriólogo Pro")
-st.markdown("Sistema de entrenamiento y nutrición basado en resultados")
+st.markdown("Sistema avanzado de entrenamiento y nutrición basado en registro detallado")
 st.divider()
 
 # ========== SIDEBAR ==========
 with st.sidebar:
     st.markdown("## Navegación")
-    pagina = st.radio("", ["Inicio", "Nutrición", "Entrenamientos", "Progreso", "Configuración"], label_visibility="collapsed")
+    pagina = st.radio("", ["Inicio", "Nutrición", "Entrenamientos", "Registros", "Configuración"], label_visibility="collapsed")
     
     st.divider()
     
     st.markdown("### Tu Perfil")
     col1, col2 = st.columns(2)
     with col1:
-        st.markdown('<div class="stat-box"><div class="stat-value">70</div><div class="stat-label">kg</div></div>', unsafe_allow_html=True)
+        st.markdown(f'<div class="stat-box"><div class="stat-value">{st.session_state.peso_actual:.1f}</div><div class="stat-label">kg</div></div>', unsafe_allow_html=True)
     with col2:
         st.markdown('<div class="stat-box"><div class="stat-value">1.68</div><div class="stat-label">m</div></div>', unsafe_allow_html=True)
-    
-    st.markdown("### Meta Diaria")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.markdown('<div class="stat-box"><div class="stat-value">2760</div><div class="stat-label">kcal</div></div>', unsafe_allow_html=True)
-    with col2:
-        st.markdown('<div class="stat-box"><div class="stat-value">145g</div><div class="stat-label">proteína</div></div>', unsafe_allow_html=True)
 
 # ========== PÁGINA: INICIO ==========
 if pagina == "Inicio":
@@ -199,72 +171,64 @@ if pagina == "Inicio":
     
     with col1:
         st.markdown("## Tu Meta de Hoy")
-        
         col_a, col_b, col_c, col_d = st.columns(4)
-        with col_a:
-            st.markdown('<div class="stat-box"><div class="stat-value">2760</div><div class="stat-label">Calorías</div></div>', unsafe_allow_html=True)
-        with col_b:
-            st.markdown('<div class="stat-box"><div class="stat-value">145g</div><div class="stat-label">Proteína</div></div>', unsafe_allow_html=True)
-        with col_c:
-            st.markdown('<div class="stat-box"><div class="stat-value">360g</div><div class="stat-label">Carbos</div></div>', unsafe_allow_html=True)
-        with col_d:
-            st.markdown('<div class="stat-box"><div class="stat-value">80g</div><div class="stat-label">Grasas</div></div>', unsafe_allow_html=True)
+        with col_a: st.markdown('<div class="stat-box"><div class="stat-value">2760</div><div class="stat-label">kcal</div></div>', unsafe_allow_html=True)
+        with col_b: st.markdown('<div class="stat-box"><div class="stat-value">145g</div><div class="stat-label">Proteína</div></div>', unsafe_allow_html=True)
+        with col_c: st.markdown('<div class="stat-box"><div class="stat-value">360g</div><div class="stat-label">Carbos</div></div>', unsafe_allow_html=True)
+        with col_d: st.markdown('<div class="stat-box"><div class="stat-value">80g</div><div class="stat-label">Grasas</div></div>', unsafe_allow_html=True)
         
-        st.markdown("## Tracking de Hoy")
+        st.markdown("## Calendario de Cumplimiento")
         
-        tab1, tab2 = st.tabs(["Consumo Real", "Análisis"])
+        # Crear calendario
+        hoy = datetime.now()
+        inicio_mes = hoy.replace(day=1)
         
-        with tab1:
-            dieta = DIETAS[st.session_state.dieta]
+        st.markdown("**Nutrición (Verde=Cumplido, Amarillo=Parcial, Gris=Incumplido)**")
+        
+        dias_semana = ["L", "M", "X", "J", "V", "S", "D"]
+        
+        # Registros del mes actual
+        registros_hoy = [r for r in st.session_state.registros_nutricion if r["fecha"].startswith(hoy.strftime("%Y-%m"))]
+        fechas_registradas = set(r["fecha"] for r in registros_hoy)
+        
+        fecha_actual = inicio_mes
+        cal_html = '<div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:8px; margin:1rem 0;">'
+        
+        # Headers
+        for dia in dias_semana:
+            cal_html += f'<div style="text-align:center; font-weight:600; font-size:0.8rem; color:#757575;">{dia}</div>'
+        
+        # Días
+        dias_mostrar = (inicio_mes.weekday()) % 7
+        for _ in range(dias_mostrar):
+            cal_html += '<div></div>'
+        
+        while fecha_actual.month == hoy.month:
+            fecha_str = fecha_actual.strftime("%Y-%m-%d")
             
-            for comida, info in dieta.items():
-                with st.container():
-                    col1, col2 = st.columns([0.6, 0.4])
-                    with col1:
-                        st.markdown(f'<div class="meal-item"><strong>{comida.upper()}</strong><br>{info["comida"]}</div>', unsafe_allow_html=True)
-                    with col2:
-                        c1, c2, c3, c4 = st.columns(4)
-                        with c1:
-                            st.caption(f'{info["kcal"]}kcal')
-                        with c2:
-                            st.caption(f'P:{info["p"]}g')
-                        with c3:
-                            st.caption(f'C:{info["c"]}g')
-                        with c4:
-                            st.caption(f'G:{info["g"]}g')
-        
-        with tab2:
-            st.markdown("### Distribución de Macros")
+            if fecha_str in fechas_registradas:
+                color = "#1F1F1F"
+            else:
+                color = "#E8E8E8"
             
-            fig = go.Figure(data=[go.Pie(
-                labels=["Proteína (145g)", "Carbohidratos (360g)", "Grasas (80g)"],
-                values=[580, 1440, 740],
-                marker=dict(colors=["#1F1F1F", "#424242", "#757575"])
-            )])
-            fig.update_layout(height=300, margin=dict(l=0, r=0, t=0, b=0))
-            st.plotly_chart(fig, use_container_width=True)
+            cal_html += f'<div style="background:{color}; padding:0.8rem; border-radius:8px; text-align:center; font-size:0.8rem; color:white; font-weight:600;">{fecha_actual.day}</div>'
+            
+            fecha_actual += timedelta(days=1)
+        
+        cal_html += '</div>'
+        st.markdown(cal_html, unsafe_allow_html=True)
     
     with col2:
-        st.markdown("## Progreso Esta Semana")
-        
-        dias = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
-        cumpl = [85, 92, 0, 88, 0, 0, 0]
-        
-        fig = go.Figure()
-        fig.add_trace(go.Bar(
-            x=dias, y=cumpl,
-            marker_color=["#1F1F1F" if x > 0 else "#E8E8E8" for x in cumpl]
-        ))
-        fig.update_layout(height=300, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
-        st.plotly_chart(fig, use_container_width=True)
-        
         st.markdown("## Próximo Entrenamiento")
         st.markdown("**Lunes** — Tren Inferior A (70 min)")
-        st.markdown("Cuádriceps + Glúteos | Intensidad Máxima")
+        
+        # Cuerpo humano
+        st.markdown("### Musculos a Entrenar")
+        st.markdown(crear_cuerpo_humano(["Cuádriceps", "Glúteos"]), unsafe_allow_html=True)
 
 # ========== PÁGINA: NUTRICIÓN ==========
 elif pagina == "Nutrición":
-    st.markdown("## Plan Nutricional")
+    st.markdown("## Plan Nutricional Detallado")
     
     col1, col2 = st.columns([0.7, 0.3])
     with col2:
@@ -274,30 +238,48 @@ elif pagina == "Nutrición":
     
     dieta = DIETAS[st.session_state.dieta]
     
-    for comida, info in dieta.items():
-        st.markdown(f'<div class="meal-item"><strong>{comida.upper()}</strong><br>{info["comida"]}</div>', unsafe_allow_html=True)
-        
-        col1, col2, col3, col4 = st.columns(4)
-        with col1:
-            st.metric("Calorías", info["kcal"])
-        with col2:
-            st.metric("Proteína", f"{info['p']}g")
-        with col3:
-            st.metric("Carbos", f"{info['c']}g")
-        with col4:
-            st.metric("Grasas", f"{info['g']}g")
-        
-        st.divider()
+    for comida_key, comida_info in dieta.items():
+        with st.container():
+            st.markdown(f"### {comida_key.upper()}")
+            st.markdown(f"*{comida_info['nombre']}*")
+            
+            total_macros = {"kcal": 0, "p": 0, "c": 0, "g": 0}
+            
+            st.markdown("#### Desglose de Alimentos")
+            
+            tabla_alimentos = []
+            
+            for alimento, gramos in comida_info["alimentos"]:
+                macros = calcular_macros(alimento, gramos)
+                
+                tabla_alimentos.append({
+                    "Alimento": alimento,
+                    "Gramos": gramos,
+                    "kcal": macros["kcal"],
+                    "Proteína (g)": macros["p"],
+                    "Carbos (g)": macros["c"],
+                    "Grasas (g)": macros["g"]
+                })
+                
+                for key in total_macros:
+                    total_macros[key] += macros[key]
+            
+            df = pd.DataFrame(tabla_alimentos)
+            st.dataframe(df, use_container_width=True, hide_index=True)
+            
+            col1, col2, col3, col4 = st.columns(4)
+            with col1: st.metric("Total kcal", round(total_macros["kcal"]))
+            with col2: st.metric("Proteína", f"{round(total_macros['p'])}g")
+            with col3: st.metric("Carbos", f"{round(total_macros['c'])}g")
+            with col4: st.metric("Grasas", f"{round(total_macros['g'])}g")
+            
+            st.divider()
 
 # ========== PÁGINA: ENTRENAMIENTOS ==========
 elif pagina == "Entrenamientos":
     st.markdown("## Programa de Entrenamientos")
     
-    st.info("Enfoque: Máximo desarrollo de tren inferior (piernas y glúteos)")
-    
-    st.divider()
-    
-    tabs = st.tabs([nombre for nombre in ENTRENAMIENTOS.keys()])
+    tabs = st.tabs(list(ENTRENAMIENTOS.keys()))
     
     for tab, (nombre, detalles) in zip(tabs, ENTRENAMIENTOS.items()):
         with tab:
@@ -305,68 +287,140 @@ elif pagina == "Entrenamientos":
             
             with col1:
                 st.markdown(f"### {nombre}")
-                st.markdown(f"**Enfoque**: {detalles['enfoque']}")
                 st.markdown(f"**Duración**: {detalles['duracion']} min")
-                
                 st.markdown("#### Ejercicios")
                 
-                for i, ej in enumerate(detalles['ejercicios'], 1):
-                    st.markdown(f'<div class="exercise-item"><h4>{i}. {ej["nombre"]}</h4><div class="exercise-meta">{ej["series"]} | {ej["musculo"]}</div><div style="color: #757575; font-size: 0.85rem; margin-top: 0.5rem;">{ej["notas"]}</div></div>', unsafe_allow_html=True)
+                for i, (ejercicio, musculo, series, reps) in enumerate(detalles["ejercicios"], 1):
+                    st.markdown(f'<div class="exercise-item"><h4>{i}. {ejercicio}</h4><div class="exercise-meta">{series}x{reps} | {musculo}</div></div>', unsafe_allow_html=True)
             
             with col2:
-                st.markdown("#### Grupos Musculares")
+                st.markdown("### Músculos Trabajados")
+                st.markdown(crear_cuerpo_humano(detalles["musculos"]), unsafe_allow_html=True)
                 
-                musculos = {}
-                for ej in detalles['ejercicios']:
-                    for m in ej['musculo'].split('/'):
-                        musculos[m.strip()] = musculos.get(m.strip(), 0) + 1
-                
-                fig = go.Figure(data=[
-                    go.Bar(x=list(musculos.keys()), y=list(musculos.values()), marker_color="#1F1F1F")
-                ])
-                fig.update_layout(height=300, showlegend=False, margin=dict(l=0, r=0, t=0, b=0))
-                st.plotly_chart(fig, use_container_width=True)
+                st.markdown(f"**Grupos principales**:")
+                for musculo in detalles["musculos"]:
+                    st.write(f"🔹 {musculo}")
 
-# ========== PÁGINA: PROGRESO ==========
-elif pagina == "Progreso":
-    st.markdown("## Tu Progreso")
+# ========== PÁGINA: REGISTROS ==========
+elif pagina == "Registros":
+    st.markdown("## Registro de Seguimiento")
     
-    tab1, tab2 = st.tabs(["Registrar", "Historial"])
+    tab1, tab2, tab3 = st.tabs(["Registrar Nutrición", "Registrar Entrenamiento", "Ver Registros"])
     
     with tab1:
+        st.markdown("### Registrar Consumo Nutricional")
+        
         col1, col2, col3 = st.columns(3)
         with col1:
-            fecha = st.date_input("Fecha")
+            fecha_nut = st.date_input("Fecha", key="fecha_nut")
         with col2:
-            peso = st.number_input("Peso (kg)", value=70.0, step=0.1)
+            hora_nut = st.time_input("Hora", key="hora_nut")
         with col3:
-            brazo = st.number_input("Brazo (cm)", value=32.0, step=0.5)
+            comida = st.selectbox("Comida", ["Desayuno", "Media Mañana", "Comida", "Merienda", "Cena", "Pre-dormir"])
         
-        col4, col5 = st.columns(2)
-        with col4:
-            pecho = st.number_input("Pecho (cm)", value=95.0, step=0.5)
-        with col5:
-            cadera = st.number_input("Cadera (cm)", value=95.0, step=0.5)
+        dieta_actual = DIETAS[st.session_state.dieta]
+        comida_key = list(dieta_actual.keys())[["Desayuno", "Media Mañana", "Comida", "Merienda", "Cena", "Pre-dormir"].index(comida)]
+        comida_info = dieta_actual[comida_key]
         
-        st.markdown("### Periodicidad de Aumento")
-        st.info("Semana 1-2: Aprende forma | Semana 3+: +2.5kg/semana en ejercicios principales")
+        st.markdown("#### Alimentos Consumidos")
         
-        if st.button("Guardar Medición"):
-            st.session_state.progreso.append({
-                "fecha": str(fecha),
-                "peso": peso,
-                "brazo": brazo,
-                "pecho": pecho,
-                "cadera": cadera
+        kcal_total = 0
+        p_total = 0
+        c_total = 0
+        g_total = 0
+        
+        consumo_alimentos = {}
+        
+        for alimento, gramos_recomendados in comida_info["alimentos"]:
+            gramos_consumidos = st.number_input(f"{alimento} (g)", value=gramos_recomendados, key=f"gramos_{alimento}")
+            macros = calcular_macros(alimento, gramos_consumidos)
+            consumo_alimentos[alimento] = {"gramos": gramos_consumidos, "macros": macros}
+            
+            kcal_total += macros["kcal"]
+            p_total += macros["p"]
+            c_total += macros["c"]
+            g_total += macros["g"]
+        
+        st.markdown("#### Totales")
+        col1, col2, col3, col4 = st.columns(4)
+        with col1: st.metric("kcal", round(kcal_total))
+        with col2: st.metric("Proteína (g)", round(p_total, 1))
+        with col3: st.metric("Carbos (g)", round(c_total, 1))
+        with col4: st.metric("Grasas (g)", round(g_total, 1))
+        
+        if st.button("Guardar Registro Nutrición"):
+            st.session_state.registros_nutricion.append({
+                "fecha": str(fecha_nut),
+                "hora": str(hora_nut),
+                "comida": comida,
+                "kcal": round(kcal_total, 1),
+                "proteina": round(p_total, 1),
+                "carbos": round(c_total, 1),
+                "grasas": round(g_total, 1),
+                "alimentos": consumo_alimentos
             })
-            st.success("✓ Guardado")
+            st.success("✓ Registro guardado")
     
     with tab2:
-        if st.session_state.progreso:
-            df = pd.DataFrame(st.session_state.progreso)
-            st.dataframe(df, use_container_width=True, hide_index=True)
-        else:
-            st.info("Registra tu primera medición")
+        st.markdown("### Registrar Entrenamiento")
+        
+        col1, col2 = st.columns(2)
+        with col1:
+            fecha_ent = st.date_input("Fecha", key="fecha_ent")
+        with col2:
+            hora_ent = st.time_input("Hora", key="hora_ent")
+        
+        tipo_entrenamiento = st.selectbox("Tipo de Entrenamiento", list(ENTRENAMIENTOS.keys()))
+        detalles_ent = ENTRENAMIENTOS[tipo_entrenamiento]
+        
+        st.markdown("#### Registros de Ejercicios")
+        
+        registros_ejercicios = []
+        
+        for ejercicio, musculo, series_default, reps_default in detalles_ent["ejercicios"]:
+            with st.expander(f"**{ejercicio}**"):
+                col1, col2, col3 = st.columns(3)
+                with col1:
+                    series_realizadas = st.number_input(f"Series de {ejercicio}", value=int(series_default.split("x")[0]), key=f"series_{ejercicio}")
+                with col2:
+                    reps_realizadas = st.text_input(f"Reps de {ejercicio}", value=reps_default, key=f"reps_{ejercicio}")
+                with col3:
+                    peso_usado = st.number_input(f"Peso (kg) - {ejercicio}", value=0.0, step=2.5, key=f"peso_{ejercicio}")
+                
+                registros_ejercicios.append({
+                    "ejercicio": ejercicio,
+                    "musculo": musculo,
+                    "series": series_realizadas,
+                    "reps": reps_realizadas,
+                    "peso": peso_usado
+                })
+        
+        lugar = st.radio("Lugar de Entrenamiento", ["Gimnasio", "Casa"])
+        notas = st.text_area("Notas")
+        
+        if st.button("Guardar Registro Entrenamiento"):
+            st.session_state.registros_entrenamiento.append({
+                "fecha": str(fecha_ent),
+                "hora": str(hora_ent),
+                "tipo": tipo_entrenamiento,
+                "lugar": lugar,
+                "ejercicios": registros_ejercicios,
+                "notas": notas
+            })
+            st.success("✓ Registro guardado")
+    
+    with tab3:
+        st.markdown("### Historial de Registros")
+        
+        if st.session_state.registros_nutricion:
+            st.markdown("#### Nutrición")
+            df_nut = pd.DataFrame(st.session_state.registros_nutricion)
+            st.dataframe(df_nut[["fecha", "hora", "comida", "kcal", "proteina", "carbos", "grasas"]], use_container_width=True, hide_index=True)
+        
+        if st.session_state.registros_entrenamiento:
+            st.markdown("#### Entrenamiento")
+            df_ent = pd.DataFrame(st.session_state.registros_entrenamiento)
+            st.dataframe(df_ent[["fecha", "hora", "tipo", "lugar"]], use_container_width=True, hide_index=True)
 
 # ========== PÁGINA: CONFIGURACIÓN ==========
 elif pagina == "Configuración":
@@ -374,27 +428,32 @@ elif pagina == "Configuración":
     
     col1, col2 = st.columns(2)
     with col1:
-        st.number_input("Peso (kg)", value=70)
+        nuevo_peso = st.number_input("Peso actual (kg)", value=st.session_state.peso_actual, step=0.1)
+        st.session_state.peso_actual = nuevo_peso
     with col2:
         st.number_input("Altura (m)", value=1.68, step=0.01)
     
-    col3, col4 = st.columns(2)
-    with col3:
-        st.number_input("Edad", value=25)
-    with col4:
-        st.selectbox("Nivel", ["Principiante", "Intermedio", "Avanzado"])
-    
     st.divider()
     
-    st.markdown("### Días de Entrenamiento")
-    dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-    dias_keys = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
+    st.markdown("### Integración con OKOK Internacional")
+    st.markdown("Para sincronizar datos de tu báscula electrónica:")
+    st.info("""
+    1. En la app OKOK Internacional, ve a Configuración
+    2. Busca "Sincronizar" o "Export"
+    3. Descarga los datos en CSV o JSON
+    4. Carga el archivo aquí
+    """)
     
-    for dia, key in zip(dias, dias_keys):
-        st.session_state.dias_entreno[key] = st.checkbox(dia, value=st.session_state.dias_entreno[key])
+    archivo_okok = st.file_uploader("Cargar archivo OKOK", type=["csv", "json"])
     
-    if st.button("Guardar Configuración"):
-        st.success("✓ Guardado")
+    if archivo_okok:
+        if archivo_okok.type == "application/json":
+            datos_okok = json.loads(archivo_okok.getvalue())
+            st.success(f"✓ Datos importados: {len(datos_okok)} registros")
+        else:
+            df_okok = pd.read_csv(archivo_okok)
+            st.dataframe(df_okok)
+            st.success("✓ Archivo OKOK cargado")
 
 st.divider()
-st.caption("Coach Nutriólogo Pro © 2024")
+st.caption("Coach Nutriólogo Pro © 2024 | Registro avanzado de progreso")
