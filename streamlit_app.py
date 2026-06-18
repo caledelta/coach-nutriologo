@@ -567,7 +567,8 @@ elif pagina == "🏋️ Entrenamientos":
                 st.markdown(f"**Descripción**: {detalles['descripcion']}")
                 
                 st.markdown("#### 💪 Grupos Musculares")
-                st.write(", ".join([f"🔹 {m}" for m in detalles['musculos']]))
+                musculos_texto = ", ".join(detalles['musculos'])
+                st.write(f"🔹 {musculos_texto}")
                 
                 st.markdown("#### ⏱️ Información")
                 col_a, col_b, col_c = st.columns(3)
