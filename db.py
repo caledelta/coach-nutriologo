@@ -3,14 +3,31 @@ from psycopg2.extras import RealDictCursor
 from datetime import datetime
 import streamlit as st
 
-# ========== CONFIGURACIÓN DE CONEXIÓN ==========
-DB_CONFIG = {
-    "host": "localhost",
-    "port": 5432,
-    "user": "postgres",
-    "password": "Terracota00",
-    "database": "coach_nutriologo"
-}
+# ========== CONFIGURACIÓN DE CONEXIÓN (Lee Secrets de Streamlit Cloud) ==========
+
+def get_db_config():
+    """Obtener configuración de BD desde Streamlit Secrets o valores por defecto"""
+    try:
+        # Si estamos en Streamlit Cloud, usamos Secrets
+        config = {
+            "host": st.secrets["database"]["host"],
+            "port": st.secrets["database"]["port"],
+            "user": st.secrets["database"]["user"],
+            "password": st.secrets["database"]["password"],
+            "database": st.secrets["database"]["database"]
+        }
+    except (KeyError, FileNotFoundError):
+        # Si no hay Secrets (desarrollo local), usar valores por defecto
+        config = {
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "Terracota00",
+            "database": "coach_nutriologo"
+        }
+    return config
+
+DB_CONFIG = get_db_config()
 
 def get_connection():
     """Obtener nueva conexión a PostgreSQL"""
