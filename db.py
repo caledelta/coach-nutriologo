@@ -8,7 +8,12 @@ import streamlit as st
 def get_db_config():
     """Obtener configuración de BD desde Streamlit Secrets o valores por defecto"""
     try:
-        # Si estamos en Streamlit Cloud, usamos Secrets
+        # Intentar usar connection_string (método recomendado para Neon)
+        conn_str = st.secrets.get("database", {}).get("connection_string")
+        if conn_str:
+            return conn_str
+        
+        # Si no hay connection_string, intentar parámetros individuales
         config = {
             "host": st.secrets["database"]["host"],
             "port": st.secrets["database"]["port"],
@@ -16,23 +21,28 @@ def get_db_config():
             "password": st.secrets["database"]["password"],
             "database": st.secrets["database"]["database"]
         }
-    except (KeyError, FileNotFoundError):
+        return config
+    except (KeyError, FileNotFoundError, TypeError):
         # Si no hay Secrets (desarrollo local), usar valores por defecto
-        config = {
+        return {
             "host": "localhost",
             "port": 5432,
             "user": "postgres",
             "password": "Terracota00",
             "database": "coach_nutriologo"
         }
-    return config
 
 DB_CONFIG = get_db_config()
 
 def get_connection():
     """Obtener nueva conexión a PostgreSQL"""
     try:
-        conn = psycopg2.connect(**DB_CONFIG)
+        # Si DB_CONFIG es string (connection_string), usarlo directamente
+        if isinstance(DB_CONFIG, str):
+            conn = psycopg2.connect(DB_CONFIG)
+        else:
+            # Si es dict, desempacar parámetros
+            conn = psycopg2.connect(**DB_CONFIG)
         return conn
     except psycopg2.Error as e:
         st.error(f"Error de conexión a BD: {e}")
