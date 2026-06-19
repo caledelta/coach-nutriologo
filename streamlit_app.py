@@ -3,32 +3,266 @@ import pandas as pd
 import json
 from datetime import datetime, timedelta
 import plotly.graph_objects as go
+from db import (
+    guardar_registro_nutricion, obtener_registros_nutricion,
+    guardar_registro_entrenamiento, obtener_registros_entrenamiento,
+    guardar_progreso_entrenamiento, obtener_progreso_entrenamiento,
+    obtener_progreso_por_ejercicio, validar_cumplimiento_dia,
+    guardar_configuracion, obtener_configuracion,
+    actualizar_registro_nutricion, eliminar_registro_nutricion,
+    guardar_peso_diario, obtener_pesos_diarios, eliminar_peso_diario,
+    actualizar_registro_entrenamiento, eliminar_registro_entrenamiento
+)
 
-st.set_page_config(page_title="Coach Nutriólogo Pro", page_icon="💪", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="Coach Nutriólogo Pro", layout="wide", initial_sidebar_state="expanded")
 
 # ========== ESTILOS ==========
 st.markdown("""
 <style>
-    * { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    body { background-color: #FAFAFA; color: #1F1F1F; }
-    .main { background-color: #FAFAFA; }
-    .stSidebar { background-color: #FFFFFF; border-right: 1px solid #E8E8E8; }
-    h1 { color: #1F1F1F; font-size: 2.2rem; font-weight: 600; }
-    h2 { color: #1F1F1F; font-size: 1.5rem; font-weight: 600; margin: 1.5rem 0 1rem 0; }
-    .stat-box { background: #FFFFFF; border: 1px solid #E8E8E8; border-radius: 12px; padding: 1.2rem; text-align: center; }
-    .stat-value { font-size: 2rem; font-weight: 700; }
-    .metric-row { background: #FFFFFF; border: 1px solid #E8E8E8; border-radius: 12px; padding: 1rem; margin: 0.5rem 0; display: flex; justify-content: space-between; align-items: center; }
-    .metric-label { display: flex; align-items: center; gap: 0.8rem; flex: 1; }
-    .metric-icon { font-size: 1.5rem; }
-    .metric-info { font-weight: 500; }
-    .metric-value-text { font-size: 1.5rem; font-weight: 700; margin-right: 1rem; }
-    .status-alto { color: #FBBC04; font-weight: 600; }
-    .status-perfecto { color: #34A853; font-weight: 600; }
-    .status-saludable { color: #34A853; font-weight: 600; }
-    .status-sobrepeso { color: #FBBC04; font-weight: 600; }
-    .stButton > button { background-color: #1F1F1F; color: #FFFFFF; width: 100%; border-radius: 8px; }
-    .meal-item { background: #FFFFFF; border-left: 3px solid #1F1F1F; padding: 1rem; border-radius: 8px; margin: 0.8rem 0; }
-    .exercise-item { background: #FFFFFF; border: 1px solid #E8E8E8; padding: 1.2rem; border-radius: 12px; margin: 1rem 0; }
+    /* ========== TIPOGRAFÍA Y BASE ========== */
+    * { 
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+        font-feature-settings: "kern" 1;
+    }
+    
+    /* ========== FONDOS Y ESTRUCTURA ========== */
+    body, .stApp { 
+        background-color: #F8F9FA !important; 
+        color: #1F1F1F !important;
+    }
+    
+    .main { 
+        background-color: #F8F9FA !important;
+        padding: 2rem 1rem !important;
+    }
+    
+    [data-testid="stMainBlockContainer"] {
+        background-color: #F8F9FA !important;
+    }
+    
+    .stSidebar {
+        background-color: #FFFFFF !important;
+        border-right: 1px solid #E0E0E0 !important;
+    }
+    
+    [data-testid="stSidebar"] {
+        background-color: #FFFFFF !important;
+    }
+    
+    /* ========== TIPOGRAFÍA ========== */
+    h1 { 
+        color: #1F1F1F !important; 
+        font-size: 2.2rem !important; 
+        font-weight: 600 !important;
+        letter-spacing: -0.5px !important;
+    }
+    
+    h2 { 
+        color: #1F1F1F !important; 
+        font-size: 1.5rem !important; 
+        font-weight: 600 !important; 
+        margin: 1.5rem 0 1rem 0 !important;
+        letter-spacing: -0.3px !important;
+    }
+    
+    h3 {
+        color: #1F1F1F !important;
+        font-weight: 600 !important;
+        letter-spacing: -0.2px !important;
+    }
+    
+    p, span, label {
+        color: #1F1F1F !important;
+    }
+    
+    /* ========== CAJAS Y CONTENEDORES ========== */
+    .stat-box { 
+        background: #FFFFFF !important; 
+        border: 1px solid #EBEBEB !important; 
+        border-radius: 12px !important; 
+        padding: 1.2rem !important; 
+        text-align: center !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    
+    .stat-box:hover {
+        border-color: #D0D0D0 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    .stat-value { 
+        font-size: 2rem !important; 
+        font-weight: 700 !important;
+        color: #1F1F1F !important;
+    }
+    
+    .metric-row { 
+        background: #FFFFFF !important; 
+        border: 1px solid #EBEBEB !important; 
+        border-radius: 12px !important; 
+        padding: 1rem !important; 
+        margin: 0.5rem 0 !important; 
+        display: flex !important; 
+        justify-content: space-between !important; 
+        align-items: center !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    
+    .metric-row:hover {
+        border-color: #D0D0D0 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    }
+    
+    .metric-label { 
+        display: flex !important; 
+        align-items: center !important; 
+        gap: 0.8rem !important; 
+        flex: 1 !important;
+    }
+    
+    .metric-icon { 
+        font-size: 1.5rem !important;
+        flex-shrink: 0 !important;
+    }
+    
+    .metric-info { 
+        font-weight: 500 !important;
+        color: #1F1F1F !important;
+    }
+    
+    .metric-value-text { 
+        font-size: 1.5rem !important; 
+        font-weight: 700 !important;
+        color: #1F1F1F !important;
+        margin-right: 1rem !important; 
+    }
+    
+    /* ========== ESTADOS Y COLORES (Verde Oliva Pastel Claro) ========== */
+    .status-alto { 
+        color: #FBBC04 !important; 
+        font-weight: 600 !important;
+    }
+    
+    .status-perfecto { 
+        color: #A8B894 !important; 
+        font-weight: 600 !important;
+    }
+    
+    .status-saludable { 
+        color: #A8B894 !important; 
+        font-weight: 600 !important;
+    }
+    
+    .status-sobrepeso { 
+        color: #FBBC04 !important; 
+        font-weight: 600 !important;
+    }
+    
+    /* ========== BOTONES (Verde Oliva Pastel Claro) ========== */
+    .stButton > button {
+        background-color: #A8B894 !important;
+        color: #FFFFFF !important;
+        width: 100% !important;
+        border-radius: 8px !important;
+        border: none !important;
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
+        padding: 0.7rem 1.2rem !important;
+        transition: all 0.2s ease-in-out !important;
+        box-shadow: 0 2px 4px rgba(168, 184, 148, 0.25) !important;
+        cursor: pointer !important;
+    }
+    
+    .stButton > button:hover {
+        background-color: #96A882 !important;
+        box-shadow: 0 4px 8px rgba(168, 184, 148, 0.35) !important;
+        transform: translateY(-2px) !important;
+    }
+    
+    .stButton > button:active {
+        background-color: #A8B894 !important;
+        transform: translateY(0) !important;
+        box-shadow: 0 2px 4px rgba(168, 184, 148, 0.25) !important;
+    }
+    
+    /* ========== SELECTBOX Y COMBOBOX ========== */
+    .stSelectbox > div > div {
+        background-color: #FFFFFF !important;
+    }
+    
+    [data-baseweb="select"] {
+        background-color: #FFFFFF !important;
+    }
+    
+    [data-baseweb="select"] > div {
+        background-color: #FFFFFF !important;
+        border: 1px solid #EBEBEB !important;
+        border-radius: 8px !important;
+    }
+    
+    [data-baseweb="select"] > div:hover {
+        border-color: #D0D0D0 !important;
+    }
+    
+    [data-baseweb="select"] > div:focus-within {
+        border-color: #1F1F1F !important;
+        box-shadow: 0 0 0 3px rgba(31, 31, 31, 0.05) !important;
+    }
+    
+    /* ========== INPUTS Y TEXTAREAS ========== */
+    input, textarea {
+        background-color: #FFFFFF !important;
+        border: 1px solid #EBEBEB !important;
+        border-radius: 8px !important;
+        color: #1F1F1F !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    
+    input:hover, textarea:hover {
+        border-color: #D0D0D0 !important;
+    }
+    
+    input:focus, textarea:focus {
+        border-color: #1F1F1F !important;
+        box-shadow: 0 0 0 3px rgba(31, 31, 31, 0.05) !important;
+        outline: none !important;
+    }
+    
+    /* ========== CHECKBOXES ========== */
+    [data-testid="stCheckbox"] {
+        color: #1F1F1F !important;
+    }
+    
+    [data-testid="stCheckbox"] label {
+        color: #1F1F1F !important;
+    }
+    
+    /* ========== ELEMENTOS ESPECÍFICOS ========== */
+    .meal-item { 
+        background: #FFFFFF !important; 
+        border-left: 3px solid #1F1F1F !important; 
+        padding: 1rem !important; 
+        border-radius: 8px !important; 
+        margin: 0.8rem 0 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    }
+    
+    .exercise-item { 
+        background: #FFFFFF !important; 
+        border: 1px solid #EBEBEB !important; 
+        padding: 1.2rem !important; 
+        border-radius: 12px !important; 
+        margin: 1rem 0 !important;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    
+    .exercise-item:hover {
+        border-color: #D0D0D0 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08) !important;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -142,8 +376,8 @@ DIETAS = {
             "alternativas": {}
         },
         "comida": {
-            "nombre": "Pasta + Salmón + Verduras",
-            "principales": [("Pasta integral", 150), ("Salmon", 200), ("Brócoli", 150)],
+            "nombre": "Pasta + Filete de Tilapia + Verduras",
+            "principales": [("Pasta integral", 150), ("Filete de tilapia", 200), ("Brócoli", 150)],
             "alternativas": {}
         },
         "merienda": {
@@ -152,80 +386,8 @@ DIETAS = {
             "alternativas": {}
         },
         "cena": {
-            "nombre": "Tilapia + Tubérculo",
-            "principales": [("Salmon", 200), ("Camote", 150)],
-            "alternativas": {
-                "Camote": ["Papa"],
-            }
-        },
-        "pre_dormir": {
-            "nombre": "Leche Entera",
-            "principales": [("Leche entera", 250)],
-            "alternativas": {}
-        }
-    },
-    "Vegetariana": {
-        "desayuno": {
-            "nombre": "Avena + Leche + Frutos",
-            "principales": [("Avena", 70), ("Leche entera", 250), ("Manzana", 120)],
-            "alternativas": {}
-        },
-        "media_mañana": {
-            "nombre": "Yogur + Plátano",
-            "principales": [("Yogur griego", 200), ("Plátano", 100)],
-            "alternativas": {}
-        },
-        "comida": {
-            "nombre": "Pasta + Lentejas + Verduras",
-            "principales": [("Pasta integral", 150), ("Lentejas", 200), ("Brócoli", 150)],
-            "alternativas": {}
-        },
-        "merienda": {
-            "nombre": "Pan + Garbanzos",
-            "principales": [("Pan integral", 60), ("Garbanzos", 150)],
-            "alternativas": {}
-        },
-        "cena": {
-            "nombre": "Tofu + Tubérculo + Ensalada",
-            "principales": [("Tofu", 250), ("Camote", 150)],
-            "alternativas": {
-                "Camote": ["Papa"],
-            }
-        },
-        "pre_dormir": {
-            "nombre": "Leche + Cereales",
-            "principales": [("Leche entera", 250)],
-            "alternativas": {}
-        }
-    },
-    "Equilibrada": {
-        "desayuno": {
-            "nombre": "Avena + Huevo + Fruta",
-            "principales": [("Avena", 65), ("Huevo", 100), ("Leche entera", 200), ("Manzana", 100)],
-            "alternativas": {
-                "Manzana": ["Plátano"],
-            }
-        },
-        "media_mañana": {
-            "nombre": "Yogur + Plátano",
-            "principales": [("Yogur griego", 200), ("Plátano", 100)],
-            "alternativas": {}
-        },
-        "comida": {
-            "nombre": "Arroz + Pollo + Verduras",
-            "principales": [("Arroz integral", 150), ("Pechuga pollo", 180), ("Brócoli", 150)],
-            "alternativas": {
-                "Pechuga pollo": ["Salmon"],
-            }
-        },
-        "merienda": {
-            "nombre": "Pan + Atún + Aguacate",
-            "principales": [("Pan integral", 60), ("Atún", 150), ("Aguacate", 50)],
-            "alternativas": {}
-        },
-        "cena": {
-            "nombre": "Salmón + Tubérculo",
-            "principales": [("Salmon", 180), ("Camote", 150)],
+            "nombre": "Filete de Tilapia + Tubérculo",
+            "principales": [("Filete de tilapia", 200), ("Camote", 150)],
             "alternativas": {
                 "Camote": ["Papa"],
             }
@@ -242,86 +404,244 @@ DIETAS = {
 ENTRENAMIENTOS = {
     "Tren Inferior A": {
         "enfoque": "Cuádriceps + Glúteos",
-        "duracion": 70,
+        "duracion": 90,
         "musculos": "Cuádriceps, Glúteos",
         "ejercicios": [
             {
                 "nombre": "Sentadilla Barra",
-                "series": "4x8-10",
+                "series": "4x6-8",
                 "musculo": "Cuádriceps/Glúteos",
-                "justificacion": "Movimiento compuesto fundamental. Activa máxima cantidad de fibras musculares. Mayor producción de hormona anabólica (testosterona, GH)."
+                "justificacion": "Movimiento compuesto fundamental. Máxima activación de fibras Type II (hipertrofia). Producción anabólica (testosterona, GH). Patrón de movimiento natural. Base de cualquier programa de ganancia muscular (Schoenfeld et al., 2016)."
             },
             {
                 "nombre": "Prensa de Pierna",
-                "series": "4x10-12",
+                "series": "3x8-10",
                 "musculo": "Cuádriceps",
-                "justificacion": "Volumen de trabajo. Reduce riesgo articular comparado con barra. Permite alcanzar mayor fatiga muscular."
+                "justificacion": "Volumen de trabajo adicional. Reduce riesgo articular vs barra. Mayor aislamiento de cuádriceps. Permite alcanzar mayor fatiga muscular en rangos hipertróficos (8-10 reps). Complementa el patrón de sentadilla (Schoenfeld, 2010)."
+            },
+            {
+                "nombre": "Extensión de Cuádriceps",
+                "series": "3x12-15",
+                "musculo": "Cuádriceps",
+                "justificacion": "Aislamiento monoarticular. Máxima contracción del cuádriceps. Acumulación de metabolitos (lactato, fosfato). Hipertrofia miofibrilar sin fatiga articular (Contreras et al., 2015). Complementa movimientos compuestos."
             },
             {
                 "nombre": "Empuje de Cadera",
-                "series": "4x12-15",
+                "series": "3x10-12",
                 "musculo": "Glúteos",
-                "justificacion": "Isolación específica de glúteos. Máxima activación de glúteo mayor. Desarrollo direccionado de masa glútea."
+                "justificacion": "Especificidad para glúteo mayor (mayor reclutamiento). Patrón de extensión de cadera aislado. Desarrollo direccionado de masa glútea. Menor fatiga del SNC que sentadilla (Contreras et al., 2016)."
             },
         ]
     },
     "Tren Superior A": {
-        "enfoque": "Empuje (Pecho, Hombros)",
-        "duracion": 55,
+        "enfoque": "Empuje (Pecho, Hombros, Tríceps)",
+        "duracion": 90,
         "musculos": "Pecho, Hombros, Tríceps",
         "ejercicios": [
             {
                 "nombre": "Press Banca Plano",
-                "series": "4x8-10",
+                "series": "4x6-8",
                 "musculo": "Pecho",
-                "justificacion": "Movimiento compuesto fundamental. Mayor producción anabólica. Máxima transferencia de fuerza."
+                "justificacion": "Movimiento compuesto fundamental. Mayor producción anabólica. Máxima transferencia de fuerza. Reclutamiento de pecho, hombros y tríceps (Schoenfeld et al., 2016). Base de desarrollo de pecho."
+            },
+            {
+                "nombre": "Press Inclinado Mancuernas",
+                "series": "3x8-10",
+                "musculo": "Pecho superior",
+                "justificacion": "Énfasis en porción superior de pecho. Mayor rango de movimiento vs barra. Activación adicional de deltoides anterior. Volumen complementario para equilibrio muscular (Schoenfeld, 2010)."
+            },
+            {
+                "nombre": "Aperturas en Pecho",
+                "series": "3x12-15",
+                "musculo": "Pecho",
+                "justificacion": "Aislamiento de pecho. Mayor elongación bajo tensión (estiramiento miofibrilar). Acumulación de metabolitos. Complementa movimientos de empuje sin fatiga articular (Contreras et al., 2016)."
             },
             {
                 "nombre": "Prensa Militar",
-                "series": "3x10-12",
-                "musculo": "Hombros",
-                "justificacion": "Desarrollo deltoides anterior. Mayor reclutamiento de estabilizadores. Fortaleza funcional."
+                "series": "3x8-10",
+                "musculo": "Hombros/Tríceps",
+                "justificacion": "Desarrollo deltoides anterior. Estabilizadores rotatores del hombro. Patrón de empuje vertical esencial. Mayor reclutamiento de estabilizadores vs press plano (Schoenfeld, 2010)."
             },
         ]
     },
     "Tren Inferior B": {
-        "enfoque": "Isquiotibiales + Glúteos",
-        "duracion": 70,
+        "enfoque": "Isquiotibiales + Glúteos (Cadena Posterior)",
+        "duracion": 90,
         "musculos": "Isquiotibiales, Glúteos",
         "ejercicios": [
             {
                 "nombre": "Peso Muerto Rumano",
-                "series": "4x8-10",
+                "series": "4x6-8",
                 "musculo": "Isquiotibiales",
-                "justificacion": "Especificidad en cadena posterior. Mayor rango de movimiento. Estiramiento bajo tensión en isquios."
+                "justificacion": "Especificidad en cadena posterior. Mayor rango de movimiento que convencional. Estiramiento bajo tensión en isquios (hipertrofia del sarcómero). Menor fatiga del SNC vs convencional (Contreras et al., 2015)."
             },
             {
                 "nombre": "Curl Femoral",
-                "series": "3x12-15",
+                "series": "3x10-12",
                 "musculo": "Isquiotibiales",
-                "justificacion": "Aislamiento monoarticular. Flexión directa. Acumulación de lactato (hipertrofia)."
+                "justificacion": "Aislamiento monoarticular. Flexión de rodilla sin extensión de cadera. Acumulación de lactato (hipertrofia miometabólica). Complementa el patrón de extensión de cadera del RDL (Schoenfeld, 2010)."
+            },
+            {
+                "nombre": "Nordic Curl",
+                "series": "3x6-8",
+                "musculo": "Isquiotibiales",
+                "justificacion": "Contracción excéntrica extrema. Máxima tensión mecánica en excéntrica (potente estímulo hipertrófico). Mayor activación de isquios vs curl tradicional. Prevención de lesiones (Contreras et al., 2016)."
+            },
+            {
+                "nombre": "Hip Thrust con Barra",
+                "series": "3x8-10",
+                "musculo": "Glúteos",
+                "justificacion": "Máxima activación de glúteo mayor en extensión de cadera. Volumen adicional para cadena posterior. Patrón complementario a RDL. Mayor especificidad que empuje de cadera (Contreras et al., 2016)."
             },
         ]
     },
     "Tren Superior B": {
         "enfoque": "Jalón (Espalda, Bíceps)",
-        "duracion": 55,
-        "musculos": "Espalda, Bíceps",
+        "duracion": 90,
+        "musculos": "Espalda, Bíceps, Trapecio",
         "ejercicios": [
             {
                 "nombre": "Remo Barra",
-                "series": "4x8-10",
+                "series": "4x6-8",
                 "musculo": "Espalda",
-                "justificacion": "Movimiento compuesto espalda. Máxima activación dorsal. Desarrollo de espalda gruesa y ancha."
+                "justificacion": "Movimiento compuesto espalda. Máxima activación dorsal. Desarrollo de espalda gruesa (ancho + grosor). Mayor producción anabólica. Equilibra press banca (Schoenfeld et al., 2016)."
             },
             {
                 "nombre": "Jalón al Pecho",
+                "series": "3x8-10",
+                "musculo": "Espalda",
+                "justificacion": "Desarrollo de amplitud dorsal (dorsal ancho). Mayor seguridad articular vs remo en posición inclinada. Volumen complementario. Diferentes ángulos de tracción para estimulación óptima (Schoenfeld, 2010)."
+            },
+            {
+                "nombre": "Remo Mancuerna",
                 "series": "3x10-12",
                 "musculo": "Espalda",
-                "justificacion": "Desarrollo de amplitud dorsal. Mayor seguridad articular."
+                "justificacion": "Mayor rango de movimiento vs barra. Reclutamiento asimétrico evita compesaciones. Flexibilidad para mayor amplitud. Complementa patrón de remo convencional (Contreras et al., 2015)."
+            },
+            {
+                "nombre": "Curl de Bíceps",
+                "series": "3x10-12",
+                "musculo": "Bíceps",
+                "justificacion": "Aislamiento monoarticular de bíceps. Flexión de codo sin movimiento de espalda. Hipertrofia directa de bíceps. Complementa movimientos de tracción compuestos (Schoenfeld, 2010)."
             },
         ]
     }
+}
+
+# ========== CATÁLOGO COMPLETO DE EJERCICIOS ==========
+def obtener_todos_ejercicios():
+    """Retorna lista de todos los ejercicios principales y alternativos"""
+    ejercicios = set()
+    
+    # Agregar ejercicios principales de todas las rutinas
+    for rutina, detalles in ENTRENAMIENTOS.items():
+        for ejercicio in detalles["ejercicios"]:
+            ejercicios.add(ejercicio["nombre"])
+            
+            # Agregar ejercicios alternativos si existen
+            if ejercicio["nombre"] in ALTERNATIVAS_EJERCICIOS:
+                for alt in ALTERNATIVAS_EJERCICIOS[ejercicio["nombre"]]:
+                    ejercicios.add(alt["nombre"])
+    
+    return sorted(list(ejercicios))
+
+def obtener_ejercicios_completos_por_tren(nombre_tren):
+    """Retorna ejercicios principales + alternativos de un tren específico"""
+    if nombre_tren not in ENTRENAMIENTOS:
+        return []
+    
+    rutina = ENTRENAMIENTOS[nombre_tren]
+    ejercicios_completos = []
+    
+    # Agregar ejercicios principales
+    for ejercicio in rutina["ejercicios"]:
+        nombre = ejercicio["nombre"]
+        ejercicios_completos.append(nombre)
+        
+        # Agregar alternativos si existen
+        if nombre in ALTERNATIVAS_EJERCICIOS:
+            for alt in ALTERNATIVAS_EJERCICIOS[nombre]:
+                ejercicios_completos.append(alt["nombre"])
+    
+    return sorted(list(set(ejercicios_completos)))
+
+# ========== ALTERNATIVAS DE EJERCICIOS ==========
+ALTERNATIVAS_EJERCICIOS = {
+    "Sentadilla Barra": [
+        {"nombre": "Sentadilla Búlgara", "series": "3x8-10 (por pierna)"},
+        {"nombre": "Sentadilla Goblet", "series": "3x10-12"},
+        {"nombre": "Sentadilla Smith", "series": "3x10-12"},
+    ],
+    "Prensa de Pierna": [
+        {"nombre": "Sentadilla Hack", "series": "3x10-12"},
+        {"nombre": "Leg Press V", "series": "3x10-12"},
+        {"nombre": "Prensa Horizontal", "series": "3x10-12"},
+    ],
+    "Extensión de Cuádriceps": [
+        {"nombre": "Leg Extension Máquina", "series": "3x12-15"},
+        {"nombre": "Sissy Squat", "series": "3x10-12"},
+    ],
+    "Empuje de Cadera": [
+        {"nombre": "Puente de Glúteos (sin peso)", "series": "3x15-20"},
+        {"nombre": "Máquina Abductora", "series": "3x12-15"},
+        {"nombre": "Elevación de Cadera Máquina", "series": "3x10-12"},
+    ],
+    "Press Banca Plano": [
+        {"nombre": "Press Mancuerna Plano", "series": "4x8-10"},
+        {"nombre": "Press en Máquina", "series": "4x8-10"},
+        {"nombre": "Push-ups", "series": "3x8-12"},
+    ],
+    "Press Inclinado Mancuernas": [
+        {"nombre": "Press Banca Inclinado", "series": "3x8-10"},
+        {"nombre": "Press Inclinado Máquina", "series": "3x8-10"},
+        {"nombre": "Aperturas Inclinadas", "series": "3x10-12"},
+    ],
+    "Aperturas en Pecho": [
+        {"nombre": "Aperturas Mancuerna Pecho", "series": "3x12-15"},
+        {"nombre": "Pec Deck Máquina", "series": "3x12-15"},
+    ],
+    "Prensa Militar": [
+        {"nombre": "Press Mancuerna Sentado", "series": "3x8-10"},
+        {"nombre": "Press Pike (cuerpo completo)", "series": "3x8-10"},
+        {"nombre": "Elevación Frontal", "series": "3x10-12"},
+    ],
+    "Peso Muerto Rumano": [
+        {"nombre": "Peso Muerto Convencional", "series": "4x6-8"},
+        {"nombre": "Stiff Leg Deadlift", "series": "4x8-10"},
+        {"nombre": "Trap Bar Deadlift", "series": "4x6-8"},
+    ],
+    "Curl Femoral": [
+        {"nombre": "Curl Nórdico", "series": "3x5-8"},
+        {"nombre": "Curl Acostado Máquina", "series": "3x10-12"},
+        {"nombre": "Curl Femoral Sentado", "series": "3x10-12"},
+    ],
+    "Nordic Curl": [
+        {"nombre": "Curl Femoral Máquina", "series": "3x10-12"},
+        {"nombre": "Nordic Curl Asistido", "series": "3x8-10"},
+    ],
+    "Hip Thrust con Barra": [
+        {"nombre": "Hip Thrust Mancuerna", "series": "3x10-12"},
+        {"nombre": "Hip Thrust Máquina", "series": "3x10-12"},
+    ],
+    "Remo Barra": [
+        {"nombre": "Remo Mancuerna", "series": "3x8-10"},
+        {"nombre": "Remo T-Bar", "series": "3x8-10"},
+        {"nombre": "Remo en Máquina", "series": "3x10-12"},
+    ],
+    "Jalón al Pecho": [
+        {"nombre": "Jalón Inverso", "series": "3x8-10"},
+        {"nombre": "Jalón Máquina", "series": "3x10-12"},
+        {"nombre": "Remo Vertical", "series": "3x10-12"},
+    ],
+    "Remo Mancuerna": [
+        {"nombre": "Remo Máquina", "series": "3x10-12"},
+        {"nombre": "Remo con Cable", "series": "3x10-12"},
+    ],
+    "Curl de Bíceps": [
+        {"nombre": "Curl Mancuerna", "series": "3x10-12"},
+        {"nombre": "Curl en Máquina", "series": "3x10-12"},
+        {"nombre": "Curl en Cable", "series": "3x10-12"},
+    ],
 }
 
 # ========== INICIALIZAR SESSION ==========
@@ -367,8 +687,12 @@ def calcular_composicion(peso, altura):
     }
 
 # ========== HEADER ==========
-st.markdown("# Coach Nutriólogo Pro")
-st.markdown("Sistema avanzado de entrenamiento y nutrición")
+st.markdown("""
+<div style="text-align: center; margin-bottom: 1rem;">
+    <h1 style="color: #A8B894; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif; font-weight: 700; letter-spacing: -0.5px; margin: 0.5rem 0;">Coach Nutriólogo Pro</h1>
+    <p style="color: #1F1F1F; font-size: 0.95rem; font-weight: 400; margin: 0.5rem 0;">Sistema avanzado de entrenamiento y nutrición</p>
+</div>
+""", unsafe_allow_html=True)
 st.divider()
 
 # ========== SIDEBAR ==========
@@ -384,76 +708,262 @@ with st.sidebar:
         st.markdown(f'<div class="stat-box"><div class="stat-value">{st.session_state.peso_actual:.1f}</div><div class="stat-label">kg</div></div>', unsafe_allow_html=True)
     with col2:
         st.markdown(f'<div class="stat-box"><div class="stat-value">{st.session_state.altura}</div><div class="stat-label">m</div></div>', unsafe_allow_html=True)
+    
+    st.markdown("### Tus Metas (85% cumplimiento)")
+    
+    # Metas a 2, 4, 6, 8 meses con 85% cumplimiento
+    peso_inicial = 71.4
+    musculo_inicial = 40.6
+    grasa_inicial = 22.4
+    
+    ganancia_musculo_mes = 1.5
+    ganancia_peso_mes = 2.0
+    reduccion_grasa_mes = 0.5
+    
+    meses_meta = [
+        {"mes": "2 meses", "num": 2},
+        {"mes": "4 meses", "num": 4},
+        {"mes": "6 meses", "num": 6},
+        {"mes": "8 meses", "num": 8},
+    ]
+    
+    col_m1, col_m2 = st.columns(2)
+    
+    for idx, meta in enumerate(meses_meta):
+        mes_num = meta["num"]
+        
+        # 85% cumplimiento (70% de ganancias)
+        peso_85 = peso_inicial + (ganancia_peso_mes * mes_num * 0.70)
+        musculo_85 = musculo_inicial + (ganancia_musculo_mes * mes_num * 0.70)
+        grasa_85 = max(grasa_inicial - (reduccion_grasa_mes * mes_num * 0.70), 12)
+        
+        col = col_m1 if idx % 2 == 0 else col_m2
+        
+        with col:
+            st.markdown(f"""
+            <div class="stat-box" style="font-size: 0.9rem; padding: 12px;">
+                <div style="font-weight: 600; color: #1F1F1F; margin-bottom: 8px;">{meta['mes']}</div>
+                <div style="font-size: 0.85rem; line-height: 1.6;">
+                    <strong>{peso_85:.1f}kg</strong><br>
+                    {musculo_85:.1f}% musc.<br>
+                    {grasa_85:.1f}% grasa
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
 
 # ========== PÁGINA: INICIO ==========
 if pagina == "Inicio":
-    col1, col2 = st.columns([0.65, 0.35])
+    st.markdown("## Carlos, esta es tu Composición Corporal")
     
-    with col1:
-        st.markdown("## Tu Composición Corporal")
-        
-        composicion = calcular_composicion(st.session_state.peso_actual, st.session_state.altura)
-        
-        for (icono_label, valor), estado in composicion.items():
-            if estado == "Alto":
-                color_status = '<span class="status-alto">Alto</span>'
-            elif estado == "Perfecto":
-                color_status = '<span class="status-perfecto">Perfecto</span>'
-            elif estado == "Saludable":
-                color_status = '<span class="status-saludable">Saludable</span>'
-            elif estado == "Sobrepeso":
-                color_status = '<span class="status-sobrepeso">Sobrepeso</span>'
-            else:
-                color_status = '<span class="status-saludable">Normal</span>'
-            
-            st.markdown(f'<div class="metric-row"><div class="metric-label"><span class="metric-icon">{icono_label.split()[0]}</span><span class="metric-info">{icono_label.split(" ", 1)[1]}</span></div><div style="display: flex; align-items: center;"><span class="metric-value-text">{valor}</span>{color_status}</div></div>', unsafe_allow_html=True)
-        
-        st.divider()
-        
-        st.markdown("## Calendario de Cumplimiento")
-        
-        hoy = datetime.now()
-        inicio_mes = hoy.replace(day=1)
-        
-        st.markdown("**Seguimiento de Entrenamientos (Verde=Completado)**")
-        
-        dias_semana = ["L", "M", "X", "J", "V", "S", "D"]
-        
-        registros_mes = [r for r in st.session_state.registros_entrenamiento if r["fecha"].startswith(hoy.strftime("%Y-%m"))]
-        fechas_entrenadas = set(r["fecha"] for r in registros_mes)
-        
-        fecha_actual = inicio_mes
-        cal_html = '<div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:8px; margin:1rem 0;">'
-        
-        for dia in dias_semana:
-            cal_html += f'<div style="text-align:center; font-weight:600; font-size:0.8rem; color:#757575;">{dia}</div>'
-        
-        dias_iniciales = (inicio_mes.weekday()) % 7
-        for _ in range(dias_iniciales):
-            cal_html += '<div></div>'
-        
-        while fecha_actual.month == hoy.month:
-            fecha_str = fecha_actual.strftime("%Y-%m-%d")
-            color = "#1F1F1F" if fecha_str in fechas_entrenadas else "#E8E8E8"
-            text_color = "white" if fecha_str in fechas_entrenadas else "#1F1F1F"
-            
-            cal_html += f'<div style="background:{color}; padding:0.8rem; border-radius:8px; text-align:center; font-size:0.8rem; color:{text_color}; font-weight:600;">{fecha_actual.day}</div>'
-            fecha_actual += timedelta(days=1)
-        
-        cal_html += '</div>'
-        st.markdown(cal_html, unsafe_allow_html=True)
+    composicion = calcular_composicion(st.session_state.peso_actual, st.session_state.altura)
     
-    with col2:
-        st.markdown("## Meta de Hoy")
-        col_a, col_b = st.columns(2)
-        with col_a:
-            st.markdown('<div class="stat-box"><div class="stat-value">2760</div><div class="stat-label">kcal</div></div>', unsafe_allow_html=True)
-        with col_b:
-            st.markdown('<div class="stat-box"><div class="stat-value">145g</div><div class="stat-label">Proteína</div></div>', unsafe_allow_html=True)
+    for (icono_label, valor), estado in composicion.items():
+        if estado == "Alto":
+            color_status = '<span class="status-alto">Alto</span>'
+        elif estado == "Perfecto":
+            color_status = '<span class="status-perfecto">Perfecto</span>'
+        elif estado == "Saludable":
+            color_status = '<span class="status-saludable">Saludable</span>'
+        elif estado == "Sobrepeso":
+            color_status = '<span class="status-sobrepeso">Sobrepeso</span>'
+        else:
+            color_status = '<span class="status-saludable">Normal</span>'
+        
+        st.markdown(f'<div class="metric-row"><div class="metric-label"><span class="metric-icon">{icono_label.split()[0]}</span><span class="metric-info">{icono_label.split(" ", 1)[1]}</span></div><div style="display: flex; align-items: center;"><span class="metric-value-text">{valor}</span>{color_status}</div></div>', unsafe_allow_html=True)
+    
+    st.divider()
+    
+    # ========== METAS MENSUALES ==========
+    st.markdown("## Metas Mensuales")
+    
+    # Proyecciones mensuales (considerando ganancia de peso y masa muscular)
+    meses = ["Mes 1", "Mes 2", "Mes 3", "Mes 4", "Mes 5", "Mes 6"]
+    
+    # Datos iniciales
+    peso_inicial = 71.4
+    musculo_inicial = 40.6
+    grasa_inicial = 22.4
+    
+    # Ganancia esperada por mes (kg)
+    ganancia_musculo_mes = 1.5
+    ganancia_peso_mes = 2.0
+    reduccion_grasa_mes = 0.5
+    
+    datos_metas = []
+    for i, mes in enumerate(meses):
+        mes_num = i + 1
+        
+        # Proyecciones para 100% cumplimiento
+        peso_100 = peso_inicial + (ganancia_peso_mes * mes_num)
+        musculo_100 = musculo_inicial + (ganancia_musculo_mes * mes_num)
+        grasa_100 = max(grasa_inicial - (reduccion_grasa_mes * mes_num), 12)
+        
+        # 90% cumplimiento (85% de ganancias)
+        peso_90 = peso_inicial + (ganancia_peso_mes * mes_num * 0.85)
+        musculo_90 = musculo_inicial + (ganancia_musculo_mes * mes_num * 0.85)
+        grasa_90 = max(grasa_inicial - (reduccion_grasa_mes * mes_num * 0.85), 12)
+        
+        # 85% cumplimiento (70% de ganancias)
+        peso_85 = peso_inicial + (ganancia_peso_mes * mes_num * 0.70)
+        musculo_85 = musculo_inicial + (ganancia_musculo_mes * mes_num * 0.70)
+        grasa_85 = max(grasa_inicial - (reduccion_grasa_mes * mes_num * 0.70), 12)
+        
+        datos_metas.append({
+            "Mes": mes,
+            "100%": f"{peso_100:.1f}kg | {musculo_100:.1f}% | {grasa_100:.1f}%",
+            "90%": f"{peso_90:.1f}kg | {musculo_90:.1f}% | {grasa_90:.1f}%",
+            "85%": f"{peso_85:.1f}kg | {musculo_85:.1f}% | {grasa_85:.1f}%"
+        })
+    
+    df_metas = pd.DataFrame(datos_metas)
+    
+    st.caption("Peso | % Masa Muscular | % Grasa Corporal")
+    st.dataframe(
+        df_metas,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Mes": st.column_config.TextColumn(width="small"),
+            "100%": st.column_config.TextColumn(label="100% Cumplimiento", width="medium"),
+            "90%": st.column_config.TextColumn(label="90% Cumplimiento", width="medium"),
+            "85%": st.column_config.TextColumn(label="85% Cumplimiento", width="medium"),
+        }
+    )
+    
+    st.divider()
+    
+    # ========== CALENDARIO DE CUMPLIMIENTO ==========
+    st.markdown("## Calendario de Cumplimiento Nutricional")
+    
+    hoy = datetime.now()
+    inicio_mes = hoy.replace(day=1)
+    
+    # Nombre del mes centrado
+    nombre_mes = inicio_mes.strftime("%B %Y").replace("January", "Enero").replace("February", "Febrero").replace("March", "Marzo").replace("April", "Abril").replace("May", "Mayo").replace("June", "Junio").replace("July", "Julio").replace("August", "Agosto").replace("September", "Septiembre").replace("October", "Octubre").replace("November", "Noviembre").replace("December", "Diciembre")
+    st.markdown(f"<h3 style='text-align: center; color: #1F1F1F;'>{nombre_mes}</h3>", unsafe_allow_html=True)
+    
+    st.markdown("**Seguimiento: Verde = Cumple 85% | Amarillo = Incumplimiento | Gris = Sin registros**")
+    
+    dias_semana = ["L", "M", "X", "J", "V", "S", "D"]
+    
+    fecha_actual = inicio_mes
+    cal_html = '<div style="display:grid; grid-template-columns:repeat(7, 1fr); gap:8px; margin:1rem 0;">'
+    
+    for dia in dias_semana:
+        cal_html += f'<div style="text-align:center; font-weight:600; font-size:0.8rem; color:#757575;">{dia}</div>'
+    
+    dias_iniciales = (inicio_mes.weekday()) % 7
+    for _ in range(dias_iniciales):
+        cal_html += '<div></div>'
+    
+    while fecha_actual.month == hoy.month:
+        fecha_str = fecha_actual.strftime("%Y-%m-%d")
+        
+        # Validar cumplimiento del día
+        cumple_85, detalles = validar_cumplimiento_dia(fecha_str, {})
+        
+        # Determinar color basado en estado
+        if not detalles or detalles.get("error") == "Sin registros":
+            # Gris: Sin registros o error
+            color = "#E8E8E8"
+            text_color = "#1F1F1F"
+            titulo = "Sin registros"
+        elif cumple_85:
+            # Verde oliva pastel claro: Cumple 85%
+            color = "#A8B894"
+            text_color = "#1F1F1F"
+            titulo = f"✓ {detalles.get('promedio', 0)}%"
+        else:
+            # Amarillo pastel: No cumple
+            color = "#F5E6D3"
+            text_color = "#1F1F1F"
+            titulo = f"⚠ {detalles.get('promedio', 0)}%"
+        
+        cal_html += f'<div style="background:{color}; padding:0.8rem; border-radius:8px; text-align:center; font-size:0.8rem; color:{text_color}; font-weight:600; cursor:pointer;" title="{titulo}">{fecha_actual.day}</div>'
+        fecha_actual += timedelta(days=1)
+    
+    cal_html += '</div>'
+    st.markdown(cal_html, unsafe_allow_html=True)
 
 # ========== PÁGINA: NUTRICIÓN ==========
 elif pagina == "Nutrición":
     st.markdown("## Plan Nutricional Detallado")
+    
+    # Recomendaciones adicionales
+    with st.expander("💡 Recomendaciones Nutricionales y Suplementos"):
+        col_rec1, col_rec2 = st.columns(2)
+        
+        with col_rec1:
+            st.markdown("#### 💧 Hidratación")
+            st.markdown("""
+            - **Ingesta diaria:** 3-4 litros de agua
+            - **Distribución:** 500ml cada hora durante el día
+            - **Post-entrenamiento:** 500-750ml adicionales
+            - **Referencia científica:** Estudios de Performance hidratación (ISSN)
+            """)
+            
+            st.markdown("#### 🧴 Suplementos Recomendados")
+            st.markdown("""
+            - **Creatina Monohidrato:** 5g/día (aumento de fuerza y volumen muscular)
+            - **Proteína Whey:** 30-40g post-entreno (recuperación)
+            - **Omega-3:** 2-3g/día (inflamación, salud cardiovascular)
+            - **Multivitamínico:** 1/día (cobertura micronutrientes)
+            """)
+        
+        with col_rec2:
+            st.markdown("#### ⚠️ Restricciones y Límites")
+            st.markdown("""
+            - **Refrescos azucarados:** Máximo 1 vaso/semana (picos de glucosa)
+            - **Alcohol:** Máximo 1 vez cada 20 días (inhibe síntesis proteica)
+            - **Azúcares refinados:** <20g/día fuera de comidas (estabilidad glucémica)
+            - **Alimentos ultraprocesados:** Evitar en lo posible
+            """)
+            
+            st.markdown("#### 📚 Base Científica")
+            st.markdown("""
+            - ISSN (International Society of Sports Nutrition)
+            - Schoenfeld et al. (Nutrición para hipertrofia)
+            - ACSM (American College of Sports Medicine)
+            """)
+        
+        # Segunda fila de recomendaciones
+        st.markdown("---")
+        
+        col_rec3, col_rec4, col_rec5 = st.columns(3)
+        
+        with col_rec3:
+            st.markdown("#### 😴 Sueño y Descanso")
+            st.markdown("""
+            - **Duración:** 7-9 horas diarias (óptimo para recuperación)
+            - **Horario:** Dormir mismo horario todos los días
+            - **Pre-sueño:** Evitar pantallas 1 hora antes
+            - **Temperatura:** 16-19°C ambiente (favorece sueño profundo)
+            - **Impacto:** El 80% del crecimiento muscular ocurre durante el sueño
+            """)
+        
+        with col_rec4:
+            st.markdown("#### ⏱️ Descanso entre Series")
+            st.markdown("""
+            - **Movimientos compuestos:** 2-3 minutos
+            - **Ejercicios secundarios:** 60-90 segundos
+            - **Superseries:** 0-30 segundos entre pares
+            - **Circuit training:** 30-60 segundos máximo
+            - **Propósito:** Recuperación del ATP/PCr para siguiente serie
+            - **Referencia:** Schoenfeld et al. (Rest-Pause Training)
+            """)
+        
+        with col_rec5:
+            st.markdown("#### 🔥 Calentamiento Pre-Entrenamiento")
+            st.markdown("""
+            - **Duración total:** 10-15 minutos
+            - **Cardiovascular:** 3-5 min ligero (trotar, bicicleta)
+            - **Movilidad:** 3-5 min (rotaciones articulares)
+            - **Activación:** 2-3 min (ejercicios del tren a trabajar)
+            - **Series de prueba:** 1-2 series al 50-70% de peso
+            - **Beneficios:** Aumento de temperatura, activación neural, prevención de lesiones
+            """)
+    
+    st.divider()
     
     col1, col2 = st.columns([0.7, 0.3])
     with col2:
@@ -464,7 +974,9 @@ elif pagina == "Nutrición":
     dieta = DIETAS[st.session_state.dieta]
     
     for comida_key, comida_info in dieta.items():
-        st.markdown(f"### {comida_key.upper()}")
+        # Formatear título: "media_mañana" -> "Media Mañana"
+        titulo_formateado = comida_key.replace("_", " ").title()
+        st.markdown(f"### {titulo_formateado}")
         st.markdown(f"*{comida_info['nombre']}*")
         
         tabla = []
@@ -532,6 +1044,14 @@ elif pagina == "Entrenamientos":
                             st.markdown(f"**Grupo muscular**: {ej['musculo']}")
                             st.markdown(f"**Justificación científica**:")
                             st.markdown(f"> {ej['justificacion']}")
+                            
+                            # Mostrar alternativas si existen
+                            if ej['nombre'] in ALTERNATIVAS_EJERCICIOS:
+                                st.divider()
+                                st.markdown("**🔄 Ejercicios Alternativos:**")
+                                alternativas = ALTERNATIVAS_EJERCICIOS[ej['nombre']]
+                                for alt in alternativas:
+                                    st.caption(f"• {alt['nombre']} — {alt['series']}")
                 
                 with col2:
                     st.markdown("#### Beneficios")
@@ -551,7 +1071,7 @@ elif pagina == "Entrenamientos":
             st.markdown("#### Registrar Progreso")
             
             fecha_prog = st.date_input("Fecha", datetime.today(), key="fecha_prog")
-            ejercicio_prog = st.selectbox("Ejercicio", ["Sentadilla Barra", "Press Banca", "Remo Barra", "Peso Muerto Rumano"])
+            ejercicio_prog = st.selectbox("Ejercicio", obtener_todos_ejercicios())
             
             col_a, col_b = st.columns(2)
             with col_a:
@@ -561,16 +1081,11 @@ elif pagina == "Entrenamientos":
             
             peso_usado = st.number_input("Peso usado (kg)", value=0.0, step=2.5)
             
-            if st.button("💾 Guardar Progreso"):
-                nuevo_progreso = {
-                    "fecha": str(fecha_prog),
-                    "ejercicio": ejercicio_prog,
-                    "series": series_realizadas,
-                    "reps": reps_realizadas,
-                    "peso": peso_usado
-                }
-                st.session_state.progreso_entrenamiento.append(nuevo_progreso)
-                st.success("✓ Progreso guardado")
+            if st.button("Guardar Progreso"):
+                if guardar_progreso_entrenamiento(fecha_prog, ejercicio_prog, series_realizadas, reps_realizadas, peso_usado):
+                    st.success("✓ Progreso guardado en BD")
+                else:
+                    st.error("Error al guardar")
         
         with col2:
             st.markdown("#### Periodicidad de Aumento")
@@ -588,8 +1103,20 @@ elif pagina == "Entrenamientos":
         
         st.markdown("### Histórico de Progreso")
         
-        if st.session_state.progreso_entrenamiento:
-            df_progreso = pd.DataFrame(st.session_state.progreso_entrenamiento)
+        progreso_db = obtener_progreso_entrenamiento()
+        
+        if progreso_db:
+            progreso_lista = []
+            for prog in progreso_db:
+                progreso_lista.append({
+                    "Fecha": prog['fecha'],
+                    "Ejercicio": prog['ejercicio'],
+                    "Series": prog['series'],
+                    "Reps": prog['reps'],
+                    "Peso (kg)": prog['peso']
+                })
+            
+            df_progreso = pd.DataFrame(progreso_lista)
             st.dataframe(df_progreso, use_container_width=True, hide_index=True)
         else:
             st.info("📝 No hay registros de progreso aún")
@@ -607,28 +1134,233 @@ elif pagina == "Registros":
         with col1:
             fecha = st.date_input("Fecha", datetime.today(), key="fecha_nut")
         with col2:
-            hora = st.time_input("Hora", datetime.now().time(), key="hora_nut")
+            comida_tipo = st.selectbox("Comida", ["Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Pre-dormir"])
         with col3:
-            comida_tipo = st.selectbox("Comida", ["Desayuno", "Comida", "Cena"])
+            # Horas recomendadas por platillo
+            horas_platillo = {
+                "Desayuno": list(range(5, 11)),  # 5:00 a 10:59
+                "Media mañana": list(range(9, 13)),  # 9:00 a 12:59
+                "Comida": list(range(12, 16)),  # 12:00 a 15:59
+                "Merienda": list(range(15, 19)),  # 15:00 a 18:59
+                "Cena": list(range(18, 22)),  # 18:00 a 21:59
+                "Pre-dormir": list(range(21, 24)),  # 21:00 a 23:59
+            }
+            
+            horas_disponibles = horas_platillo.get(comida_tipo, list(range(5, 24)))
+            hora_seleccionada = st.selectbox(
+                "Hora", 
+                [f"{h:02d}:00" for h in horas_disponibles],
+                key="hora_nut"
+            )
+            hora = datetime.strptime(hora_seleccionada, "%H:%M").time()
+        
+        # Mostrar alimentos de la dieta actual
+        dieta_actual = DIETAS[st.session_state.dieta]
+        comida_key = comida_tipo.lower().replace(" ", "_")
         
         items_registro = []
-        for alimento in ["Avena", "Huevo", "Leche entera", "Plátano"][:4]:
-            col_a, col_b = st.columns(2)
-            with col_a:
-                st.number_input(f"{alimento} (rec.)", value=100, disabled=True, key=f"rec_{alimento}")
-            with col_b:
-                consumido = st.number_input(f"{alimento} (cons.)", value=100, key=f"cons_{alimento}")
-            
-            items_registro.append({"alimento": alimento, "consumido": consumido})
         
-        if st.button("💾 Guardar Registro Nutrición"):
-            st.session_state.registros_nutricion.append({
-                "fecha": str(fecha),
-                "hora": str(hora),
-                "comida": comida_tipo,
-                "items": items_registro
+        if comida_key in dieta_actual:
+            comida_info = dieta_actual[comida_key]
+            st.markdown(f"*{comida_info['nombre']}*")
+            
+            for alimento, gramos_rec in comida_info['principales']:
+                col_a, col_b, col_c = st.columns([1.5, 1, 1.2])
+                
+                # Obtener alternativas si existen
+                alternativas_disp = comida_info.get('alternativas', {}).get(alimento, [])
+                opciones = [alimento] + alternativas_disp
+                
+                with col_a:
+                    consumido_nombre = st.selectbox(
+                        f"Consumido (de {alimento})", 
+                        opciones, 
+                        key=f"alt_{alimento}"
+                    )
+                with col_b:
+                    st.text(f"{gramos_rec}g")
+                with col_c:
+                    consumido = st.number_input(
+                        f"Consumo", 
+                        value=gramos_rec, 
+                        key=f"cons_{alimento}", 
+                        label_visibility="collapsed"
+                    )
+                
+                items_registro.append({
+                    "alimento": alimento,
+                    "recomendado": gramos_rec,
+                    "consumido": consumido,
+                    "consumido_nombre": consumido_nombre
+                })
+        
+        if st.button("Guardar Registro"):
+            if items_registro:
+                if guardar_registro_nutricion(fecha, hora, comida_tipo, st.session_state.dieta, items_registro, calcular_macros):
+                    st.success("✓ Registro guardado en BD")
+                else:
+                    st.error("Error al guardar el registro")
+            else:
+                st.warning("Selecciona una comida válida")
+        
+        st.divider()
+        
+        st.markdown("### Histórico de Registros")
+        
+        registros_db = obtener_registros_nutricion(fecha)
+        
+        if registros_db:
+            # Agrupar por fecha y hora de comida
+            registros_por_fecha = {}
+            for reg in registros_db:
+                fecha_reg = str(reg['fecha'])
+                if fecha_reg not in registros_por_fecha:
+                    registros_por_fecha[fecha_reg] = {}
+                
+                clave_comida = (str(reg['hora']), reg['comida'])
+                if clave_comida not in registros_por_fecha[fecha_reg]:
+                    registros_por_fecha[fecha_reg][clave_comida] = []
+                
+                registros_por_fecha[fecha_reg][clave_comida].append(reg)
+            
+            # Mostrar por fecha
+            for fecha_mostrar in sorted(registros_por_fecha.keys(), reverse=True):
+                comidas_dia = registros_por_fecha[fecha_mostrar]
+                
+                # Calcular totales del día
+                total_kcal = 0
+                total_proteina = 0
+                total_carbos = 0
+                total_grasas = 0
+                
+                st.markdown(f"**📅 {fecha_mostrar}**")
+                
+                # Mostrar cada comida del día
+                for (hora_comida, nombre_comida), registros in sorted(comidas_dia.items(), reverse=True):
+                    st.markdown(f"*{nombre_comida}* - {hora_comida}")
+                    
+                    tabla_monitoreo = []
+                    cumplimientos = []
+                    
+                    for reg in registros:
+                        tabla_monitoreo.append({
+                            "Alimento": reg['alimento_recomendado'],
+                            "Gramaje": reg['gramos_recomendado'],
+                            "Alimento consumido": reg['alimento_consumido'],
+                            "Gramaje consumido": reg['gramos_consumido'],
+                            "Alternativa": reg['alternativa'],
+                            "% cumplimiento": f"{reg['porcentaje_cumplimiento']}%",
+                            "ID": reg['id']
+                        })
+                        # Solo agregar porcentajes > 0 al cálculo de promedio
+                        if reg['porcentaje_cumplimiento'] > 0:
+                            cumplimientos.append(reg['porcentaje_cumplimiento'])
+                        
+                        # Acumular macronutrientes
+                        if reg['kcal']:
+                            total_kcal += reg['kcal']
+                        if reg['proteina_g']:
+                            total_proteina += reg['proteina_g']
+                        if reg['carbos_g']:
+                            total_carbos += reg['carbos_g']
+                        if reg['grasas_g']:
+                            total_grasas += reg['grasas_g']
+                    
+                    if tabla_monitoreo:
+                        df_monitoreo = pd.DataFrame([{k: v for k, v in d.items() if k != 'ID'} for d in tabla_monitoreo])
+                        st.dataframe(df_monitoreo, use_container_width=True, hide_index=True)
+                        
+                        # Sección de edición
+                        with st.expander("✏️ Editar o eliminar registros"):
+                            for i, reg in enumerate(registros):
+                                col_e1, col_e2, col_e3 = st.columns([0.5, 0.25, 0.25])
+                                with col_e1:
+                                    nuevo_gramaje = st.number_input(
+                                        f"Gramaje: {reg['alimento_consumido']}",
+                                        value=float(reg['gramos_consumido']),
+                                        step=1.0,
+                                        key=f"gramaje_{reg['id']}"
+                                    )
+                                with col_e2:
+                                    if st.button("Actualizar", key=f"actualizar_{reg['id']}"):
+                                        if actualizar_registro_nutricion(reg['id'], nuevo_gramaje, calcular_macros):
+                                            st.success(f"✓ Actualizado")
+                                            st.rerun()
+                                with col_e3:
+                                    if st.button("Eliminar", key=f"eliminar_{reg['id']}"):
+                                        if eliminar_registro_nutricion(reg['id']):
+                                            st.success(f"✓ Eliminado")
+                                            st.rerun()
+                        
+                        if cumplimientos:
+                            promedio = round(sum(cumplimientos) / len(cumplimientos), 1)
+                            st.markdown(f"*Porcentaje de cumplimiento promedio: **{promedio}%***")
+                
+                # Mostrar expander con totales del día
+                with st.expander(f"Resumen del Día - kcal: {round(total_kcal)}, Proteína: {round(total_proteina)}g, Carbos: {round(total_carbos)}g, Grasas: {round(total_grasas)}g"):
+                    col_k, col_p, col_c, col_g = st.columns(4)
+                    with col_k:
+                        st.metric("Total kcal", round(total_kcal))
+                    with col_p:
+                        st.metric("Proteína (g)", round(total_proteina, 1))
+                    with col_c:
+                        st.metric("Carbohidratos (g)", round(total_carbos, 1))
+                    with col_g:
+                        st.metric("Grasas (g)", round(total_grasas, 1))
+                
+                st.divider()
+        else:
+            st.info("No hay registros para esta fecha")
+        
+        # Gráfica de cumplimiento últimos 7 días
+        st.markdown("### Cumplimiento Nutricional (Últimos 7 días)")
+        
+        from datetime import timedelta
+        
+        datos_grafica = []
+        for i in range(6, -1, -1):  # Últimos 7 días
+            fecha_grafica = (datetime.today() - timedelta(days=i)).strftime("%Y-%m-%d")
+            cumple, detalles = validar_cumplimiento_dia(fecha_grafica, {})
+            
+            promedio_dia = detalles.get("promedio", 0) if detalles else 0
+            datos_grafica.append({
+                "Fecha": (datetime.today() - timedelta(days=i)).strftime("%d/%m"),
+                "Cumplimiento %": float(promedio_dia) if promedio_dia else 0
             })
-            st.success("✓ Registro guardado")
+        
+        df_grafica = pd.DataFrame(datos_grafica)
+        
+        if df_grafica["Cumplimiento %"].sum() > 0:
+            fig = go.Figure(data=[
+                go.Bar(
+                    x=df_grafica["Fecha"],
+                    y=df_grafica["Cumplimiento %"],
+                    marker=dict(
+                        color=df_grafica["Cumplimiento %"],
+                        colorscale=[[0, '#F5E6D3'], [0.85, '#D4E0C9'], [0.86, '#A8B894'], [1, '#A8B894']],
+                        showscale=False
+                    ),
+                    text=df_grafica["Cumplimiento %"].round(0).astype(str) + "%",
+                    textposition="outside",
+                    hovertemplate="<b>%{x}</b><br>Cumplimiento: %{y:.1f}%<extra></extra>"
+                )
+            ])
+            
+            fig.update_layout(
+                title=None,
+                xaxis_title="Fecha",
+                yaxis_title="Cumplimiento %",
+                height=300,
+                showlegend=False,
+                hovermode="x unified",
+                margin=dict(l=40, r=40, t=40, b=40),
+                template="plotly_white"
+            )
+            fig.update_yaxes(range=[0, 100])
+            
+            st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("Sin datos de cumplimiento en los últimos 7 días")
     
     with tab_ent:
         st.markdown("### Registrar Entrenamiento")
@@ -639,39 +1371,164 @@ elif pagina == "Registros":
         with col2:
             hora_ent = st.time_input("Hora", datetime.now().time(), key="hora_ent")
         with col3:
-            lugar = st.radio("Lugar", ["Gimnasio", "Casa"], horizontal=True)
+            lugar = st.selectbox("Lugar", ["Gimnasio", "Casa"])
         
         tren = st.selectbox("Tren", list(ENTRENAMIENTOS.keys()))
+        
+        # Checklist de ejercicios del tren seleccionado (principales + alternativos)
+        st.markdown("**Ejercicios realizados:**")
+        ejercicios_tren = obtener_ejercicios_completos_por_tren(tren)
+        
+        cols_ejercicios = st.columns(3)
+        ejercicios_realizados = []
+        
+        for idx, ejercicio in enumerate(ejercicios_tren):
+            col = cols_ejercicios[idx % 3]
+            with col:
+                if st.checkbox(ejercicio, key=f"check_ent_{ejercicio}_{tren}"):
+                    ejercicios_realizados.append(ejercicio)
+        
         duracion = st.number_input("Duración (min)", value=60)
         
-        if st.button("💾 Guardar Entrenamiento"):
-            st.session_state.registros_entrenamiento.append({
-                "fecha": str(fecha_ent),
-                "hora": str(hora_ent),
-                "lugar": lugar,
-                "tren": tren,
-                "duracion": duracion
-            })
-            st.success("✓ Entrenamiento guardado")
+        if st.button("Guardar Entrenamiento"):
+            if guardar_registro_entrenamiento(fecha_ent, hora_ent, lugar, tren, duracion):
+                st.success("✓ Entrenamiento guardado en BD")
+            else:
+                st.error("Error al guardar el registro")
         
         st.divider()
         
-        if st.session_state.registros_entrenamiento:
-            df_ent = pd.DataFrame(st.session_state.registros_entrenamiento)
-            st.dataframe(df_ent[["fecha", "hora", "tren", "lugar"]], use_container_width=True, hide_index=True)
+        registros_db_ent = obtener_registros_entrenamiento()
+        
+        if registros_db_ent:
+            # Convertir a DataFrame para mostrar
+            registros_lista = []
+            for reg in registros_db_ent:
+                registros_lista.append({
+                    "Fecha": reg['fecha'],
+                    "Hora": reg['hora'],
+                    "Tren": reg['tren'],
+                    "Lugar": reg['lugar'],
+                    "Duración (min)": reg['duracion'],
+                    "ID": reg['id']
+                })
+            
+            df_ent = pd.DataFrame([{k: v for k, v in d.items() if k != 'ID'} for d in registros_lista])
+            st.dataframe(df_ent, use_container_width=True, hide_index=True)
+            
+            # Sección de editar/eliminar
+            with st.expander("✏️ Editar o eliminar entrenamientos"):
+                for i, reg in enumerate(registros_db_ent):
+                    col_e1, col_e2, col_e3 = st.columns([0.5, 0.25, 0.25])
+                    with col_e1:
+                        duracion_edit = st.number_input(
+                            f"Duración (min) - {reg['fecha']} {reg['tren']}",
+                            value=int(reg['duracion']),
+                            min_value=5,
+                            step=5,
+                            key=f"dur_ent_{reg['id']}"
+                        )
+                    with col_e2:
+                        if st.button("Actualizar", key=f"upd_ent_{reg['id']}"):
+                            if actualizar_registro_entrenamiento(reg['id'], duracion_edit):
+                                st.success("✓ Actualizado")
+                                st.rerun()
+                    with col_e3:
+                        if st.button("Eliminar", key=f"del_ent_{reg['id']}"):
+                            if eliminar_registro_entrenamiento(reg['id']):
+                                st.success("✓ Eliminado")
+                                st.rerun()
+        else:
+            st.info("📝 No hay entrenamientos registrados")
 
 # ========== PÁGINA: CONFIGURACIÓN ==========
 elif pagina == "Configuración":
     st.markdown("## Configuración")
     
+    st.markdown("### Datos Personales")
     col1, col2 = st.columns(2)
     with col1:
-        st.session_state.peso_actual = st.number_input("Peso (kg)", value=st.session_state.peso_actual, step=0.1)
+        nuevo_peso = st.number_input("Peso (kg)", value=st.session_state.peso_actual, step=0.1)
     with col2:
-        st.session_state.altura = st.number_input("Altura (m)", value=st.session_state.altura, step=0.01)
+        nueva_altura = st.number_input("Altura (m)", value=st.session_state.altura, step=0.01)
     
-    if st.button("Guardar"):
-        st.success("✓ Guardado")
+    if st.button("Guardar Cambios"):
+        if guardar_configuracion(nuevo_peso, nueva_altura):
+            st.session_state.peso_actual = nuevo_peso
+            st.session_state.altura = nueva_altura
+            st.success("✓ Datos guardados correctamente en BD")
+            st.rerun()
+        else:
+            st.error("Error al guardar los datos")
+    
+    st.divider()
+    
+    st.markdown("### Registro de Peso Diario (En ayunas)")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        fecha_peso = st.date_input("Fecha del registro", datetime.today(), key="fecha_peso")
+    with col2:
+        peso_diario = st.number_input("Peso (kg)", value=st.session_state.peso_actual, step=0.1, key="peso_diario")
+    
+    notas = st.text_input("Notas (opcional)", placeholder="Ej: Pesado por la tarde, hidratación alta")
+    
+    col_a, col_b = st.columns([0.7, 0.3])
+    with col_a:
+        if st.button("Registrar Peso", use_container_width=True):
+            if guardar_peso_diario(fecha_peso, peso_diario, notas):
+                st.success(f"✓ Peso registrado: {peso_diario}kg en {fecha_peso}")
+                st.rerun()
+    
+    with col_b:
+        st.write("")  # Espaciador
+    
+    # Histórico de pesos
+    st.markdown("#### Histórico (últimos 30 días)")
+    pesos = obtener_pesos_diarios()
+    
+    if pesos:
+        df_pesos = pd.DataFrame(pesos)
+        df_pesos['Cambio'] = df_pesos['peso'].diff().round(2)
+        
+        # Mostrar tabla
+        st.dataframe(
+            df_pesos[['fecha', 'peso', 'Cambio', 'notas']],
+            use_container_width=True,
+            hide_index=True,
+            column_config={
+                "fecha": st.column_config.DateColumn("Fecha"),
+                "peso": st.column_config.NumberColumn("Peso (kg)", format="%.2f kg"),
+                "Cambio": st.column_config.NumberColumn("Cambio (kg)", format="%.2f kg"),
+                "notas": st.column_config.TextColumn("Notas"),
+            }
+        )
+        
+        # Botones de editar/eliminar
+        with st.expander("✏️ Editar o eliminar registros"):
+            for idx, registro in enumerate(pesos):
+                col_d1, col_d2, col_d3 = st.columns([0.5, 0.25, 0.25])
+                with col_d1:
+                    nuevo_peso_edit = st.number_input(
+                        f"Peso {registro['fecha']}", 
+                        value=float(registro['peso']),
+                        step=0.1,
+                        key=f"peso_edit_{idx}"
+                    )
+                with col_d2:
+                    if st.button("Actualizar", key=f"save_peso_{idx}", help="Actualizar"):
+                        if guardar_peso_diario(registro['fecha'], nuevo_peso_edit, registro['notas']):
+                            st.success("✓ Actualizado")
+                            st.rerun()
+                with col_d3:
+                    if st.button("🗑️", key=f"del_peso_{idx}", help="Eliminar"):
+                        if eliminar_peso_diario(registro['fecha']):
+                            st.success("✓ Eliminado")
+                            st.rerun()
+    else:
+        st.info("No hay registros de peso aún. ¡Comienza a registrar!")
 
 st.divider()
-st.caption("Coach Nutriólogo Pro © 2024")
+ahora = datetime.now()
+fecha_hora = ahora.strftime("%A, %d de %B de %Y | %H:%M:%S").replace("Monday", "Lunes").replace("Tuesday", "Martes").replace("Wednesday", "Miércoles").replace("Thursday", "Jueves").replace("Friday", "Viernes").replace("Saturday", "Sábado").replace("Sunday", "Domingo").replace("January", "Enero").replace("February", "Febrero").replace("March", "Marzo").replace("April", "Abril").replace("May", "Mayo").replace("June", "Junio").replace("July", "Julio").replace("August", "Agosto").replace("September", "Septiembre").replace("October", "Octubre").replace("November", "Noviembre").replace("December", "Diciembre")
+st.caption(f"⏰ {fecha_hora} | Coach Nutriólogo Pro © 2024")
