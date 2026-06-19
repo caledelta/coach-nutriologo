@@ -652,15 +652,13 @@ if "registros_entrenamiento" not in st.session_state:
 if "progreso_entrenamiento" not in st.session_state:
     st.session_state.progreso_entrenamiento = []
 if "peso_actual" not in st.session_state:
-    # Cargar desde BD
-    config = obtener_configuracion()
-    st.session_state.peso_actual = config["peso_actual"]
-    st.session_state.altura = config["altura"]
+    st.session_state.peso_actual = 71.4
 if "dieta" not in st.session_state:
     st.session_state.dieta = "Pollo"
 if "altura" not in st.session_state:
-    config = obtener_configuracion()
-    st.session_state.altura = config["altura"]
+    st.session_state.altura = 1.68
+if "config_loaded" not in st.session_state:
+    st.session_state.config_loaded = False
 
 # ========== FUNCIONES ==========
 def calcular_macros(alimento, gramos):
@@ -757,6 +755,13 @@ with st.sidebar:
 
 # ========== PÁGINA: INICIO ==========
 if pagina == "Inicio":
+    # Cargar configuración desde BD solo una vez
+    if not st.session_state.config_loaded:
+        config = obtener_configuracion()
+        st.session_state.peso_actual = config["peso_actual"]
+        st.session_state.altura = config["altura"]
+        st.session_state.config_loaded = True
+    
     st.markdown("## Carlos, esta es tu Composición Corporal")
     
     composicion = calcular_composicion(st.session_state.peso_actual, st.session_state.altura)
