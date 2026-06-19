@@ -6,19 +6,33 @@ import streamlit as st
 # ========== CONFIGURACIÓN DE CONEXIÓN (Lee Secrets de Streamlit Cloud) ==========
 
 def get_db_config():
-    """Obtener configuración de BD desde connection string de Neon"""
+    """Obtener configuración de BD desde Streamlit Secrets o valores por defecto"""
     try:
-        conn_str = st.secrets["database"]["connection_string"]
-        return conn_str
-    except:
-        return "postgresql://postgres:Terracota00@localhost/coach_nutriologo"
+        # Si estamos en Streamlit Cloud, usamos Secrets
+        config = {
+            "host": st.secrets["database"]["host"],
+            "port": st.secrets["database"]["port"],
+            "user": st.secrets["database"]["user"],
+            "password": st.secrets["database"]["password"],
+            "database": st.secrets["database"]["database"]
+        }
+    except (KeyError, FileNotFoundError):
+        # Si no hay Secrets (desarrollo local), usar valores por defecto
+        config = {
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "Terracota00",
+            "database": "coach_nutriologo"
+        }
+    return config
 
 DB_CONFIG = get_db_config()
 
 def get_connection():
     """Obtener nueva conexión a PostgreSQL"""
     try:
-        conn = psycopg2.connect(DB_CONFIG)
+        conn = psycopg2.connect(**DB_CONFIG)
         return conn
     except psycopg2.Error as e:
         st.error(f"Error de conexión a BD: {e}")
@@ -248,23 +262,38 @@ def guardar_configuracion(peso, altura):
     """Guardar peso y altura del usuario en BD"""
     conn = get_connection()
     if not conn:
+        st.error("No se pudo conectar a la base de datos")
         return False
     
     try:
         with conn.cursor() as cur:
-            cur.execute("""
-                UPDATE usuarios 
-                SET peso_actual = %s, altura = %s, fecha_actualizacion = CURRENT_TIMESTAMP
-                WHERE id = 1
-            """, (peso, altura))
+            # Verificar que usuario existe
+            cur.execute("SELECT id FROM usuarios WHERE id = 1")
+            if not cur.fetchone():
+                # Si no existe, crear usuario por defecto
+                cur.execute("""
+                    INSERT INTO usuarios (id, nombre, peso_actual, altura, edad, nivel_experiencia)
+                    VALUES (1, 'Usuario Principal', %s, %s, 26, 'Principiante')
+                """, (peso, altura))
+            else:
+                # Actualizar usuario existente
+                cur.execute("""
+                    UPDATE usuarios 
+                    SET peso_actual = %s, altura = %s, fecha_actualizacion = CURRENT_TIMESTAMP
+                    WHERE id = 1
+                """, (peso, altura))
         
         conn.commit()
         conn.close()
         return True
     except psycopg2.Error as e:
-        st.error(f"Error al guardar: {e}")
-        if conn:
+        st.error(f"Error al guardar configuración: {e}")
+        try:
+            conn.rollback()
             conn.close()
+        except:
+            pass
+        return False
         return False
 
 def actualizar_registro_nutricion(registro_id, gramos_consumido, calcular_macros_fn):
