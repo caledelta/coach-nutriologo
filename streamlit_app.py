@@ -1043,15 +1043,14 @@ elif pagina == "Nutrición":
     col_temp1, col_temp2 = st.columns([3, 1], gap="small")
     
     with col_temp2:
-        st.markdown("<div style='margin-top: 8px;'>", unsafe_allow_html=True)
-        st.session_state.dieta = st.selectbox(
+        dieta_seleccionada = st.selectbox(
             "Dieta",
             list(DIETAS.keys()),
             index=list(DIETAS.keys()).index(st.session_state.dieta),
             key="dieta_nutricion",
             label_visibility="collapsed"
         )
-        st.markdown("</div>", unsafe_allow_html=True)
+        st.session_state.dieta = dieta_seleccionada
     
     # Segundo: Calcular totales por dieta
     dieta_actual = DIETAS[st.session_state.dieta]
@@ -1076,12 +1075,10 @@ elif pagina == "Nutrición":
                     total_c += macros["c"]
                     total_g += macros["g"]
     
-    # Tercero: Mostrar barra de resumen compacta
-    col_resumen, col_vacio = st.columns([3, 1])
-    
-    with col_resumen:
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #A8B894 0%, #96A882 100%); padding: 12px 15px; border-radius: 8px; display: flex; justify-content: space-around; align-items: center; gap: 10px;">
+    # Tercero: Mostrar barra de resumen compacta UNIFICADA
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #A8B894 0%, #96A882 100%); padding: 12px 15px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; gap: 15px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-around; flex: 3; gap: 10px;">
             <div style="text-align: center; flex: 1;">
                 <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_kcal)}</div>
                 <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">kcal</div>
@@ -1099,7 +1096,8 @@ elif pagina == "Nutrición":
                 <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Grasas</div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
     
     # Recomendaciones adicionales
     with st.expander("💡 Recomendaciones Nutricionales y Suplementos"):
@@ -1373,6 +1371,7 @@ elif pagina == "Registros":
     
     with tab_nut:
         st.markdown("### Registrar Consumo Nutricional")
+        st.markdown("<p style='color: #A8B894; font-size: 0.9rem; margin: 5px 0 15px 0;'><b>✓ Principal</b> | <b style='color: #A8B894;'>↔️ Alternativas (verde oliva)</b></p>", unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -1421,16 +1420,16 @@ elif pagina == "Registros":
                 # Obtener alternativas si existen
                 alternativas_disp = comida_info.get('alternativas', {}).get(alimento, [])
                 
-                # Limpiar alternativas (remover "(alt. a ...)" para mostrar nombres claros)
-                alternativas_limpias = []
+                # Limpiar alternativas y crear lista con indicadores
+                opciones = [f"✓ {alimento}"]  # Alimento principal con ✓
+                
                 for alt in alternativas_disp:
                     if "(alt. a" in alt:
                         nombre_alt = alt.split(" (alt. a")[0]
                     else:
                         nombre_alt = alt
-                    alternativas_limpias.append(nombre_alt)
-                
-                opciones = [alimento] + alternativas_limpias
+                    # Agregar ↔️ para alternativas (se mostrarán en verde oliva)
+                    opciones.append(f"↔️ {nombre_alt}")
                 
                 with col_a:
                     consumido_nombre = st.selectbox(
@@ -1448,11 +1447,14 @@ elif pagina == "Registros":
                         label_visibility="collapsed"
                     )
                 
+                # Limpiar nombre para guardar en BD (remover ✓ y ↔️)
+                consumido_nombre_limpio = consumido_nombre.replace("✓ ", "").replace("↔️ ", "")
+                
                 items_registro.append({
                     "alimento": alimento,
                     "recomendado": cantidad,
                     "consumido": consumido,
-                    "consumido_nombre": consumido_nombre
+                    "consumido_nombre": consumido_nombre_limpio
                 })
         
         if st.button("Guardar Registro"):
