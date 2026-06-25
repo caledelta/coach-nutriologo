@@ -272,6 +272,8 @@ ALIMENTOS = {
     "Huevo": {"kcal": 155, "p": 13, "c": 1.1, "g": 11},
     "Plátano": {"kcal": 89, "p": 1.1, "c": 23, "g": 0.3},
     "Leche entera": {"kcal": 64, "p": 3.2, "c": 4.8, "g": 3.6},
+    "Leche deslactosada": {"kcal": 61, "p": 3.1, "c": 4.7, "g": 3.5},
+    "Leche de coco": {"kcal": 230, "p": 2.3, "c": 5.5, "g": 24},
     "Yogur griego": {"kcal": 59, "p": 10, "c": 3.3, "g": 0.4},
     "Pechuga pollo": {"kcal": 165, "p": 31, "c": 0, "g": 3.6},
     "Arroz integral": {"kcal": 112, "p": 2.6, "c": 24, "g": 0.9},
@@ -282,6 +284,14 @@ ALIMENTOS = {
     "Aguacate": {"kcal": 160, "p": 2, "c": 9, "g": 15},
     "Carne magra": {"kcal": 250, "p": 26, "c": 0, "g": 15},
     "Salmon": {"kcal": 208, "p": 20, "c": 0, "g": 13},
+    "Pan integral": {"kcal": 265, "p": 9, "c": 49, "g": 3.3},
+    "Manzana": {"kcal": 52, "p": 0.3, "c": 14, "g": 0.2},
+    "Mantequilla de maní": {"kcal": 588, "p": 25, "c": 20, "g": 50},
+    "Claras de huevo": {"kcal": 52, "p": 11, "c": 0.7, "g": 0},
+    "Pasta integral": {"kcal": 124, "p": 5.3, "c": 25, "g": 1.1},
+    "Filete de tilapia": {"kcal": 96, "p": 20, "c": 0, "g": 1.2},
+    "Agua": {"kcal": 0, "p": 0, "c": 0, "g": 0},
+    "Creatina monohidratada": {"kcal": 0, "p": 0, "c": 0, "g": 0},
 }
 
 # ========== DIETAS CON ALTERNATIVAS Y UNIDADES ==========
@@ -292,14 +302,14 @@ DIETAS = {
             "principales": [
                 ("Avena", 60, "g"),
                 ("Huevo", 100, "g"),
-                ("Leche almendras", 200, "mL"),
+                ("Leche deslactosada", 200, "mL"),
                 ("Plátano", 120, "g"),
                 ("Creatina monohidratada", 5, "g"),
                 ("Agua", 500, "mL")
             ],
             "alternativas": {
                 "Plátano": ["Manzana (alt. a Plátano)"],
-                "Leche almendras": ["Leche de coco (alt. a Leche almendras)"],
+                "Leche deslactosada": ["Leche de coco (alt. a Leche deslactosada)"],
             }
         },
         "media_mañana": {
@@ -357,11 +367,12 @@ DIETAS = {
     },
     "Carnes Rojas": {
         "desayuno": {
-            "nombre": "Pan + Huevo + Fruta + Agua",
+            "nombre": "Pan + Huevo + Fruta + Agua + Creatina",
             "principales": [
                 ("Pan integral", 80, "g"),
                 ("Huevo", 100, "g"),
                 ("Manzana", 150, "g"),
+                ("Creatina monohidratada", 5, "g"),
                 ("Agua", 500, "mL")
             ],
             "alternativas": {
@@ -426,7 +437,7 @@ DIETAS = {
             "principales": [
                 ("Avena", 70, "g"),
                 ("Claras de huevo", 200, "mL"),
-                ("Leche almendras", 180, "mL"),
+                ("Leche deslactosada", 180, "mL"),
                 ("Plátano", 120, "g"),
                 ("Creatina monohidratada", 5, "g"),
                 ("Agua", 500, "mL")
@@ -981,6 +992,64 @@ if pagina == "Inicio":
 elif pagina == "Nutrición":
     st.markdown("## Plan Nutricional Detallado")
     
+    # Selector de dieta
+    col_dieta, col_empty = st.columns([2, 4])
+    with col_dieta:
+        st.session_state.dieta = st.selectbox(
+            "Elige tu dieta",
+            list(DIETAS.keys()),
+            index=list(DIETAS.keys()).index(st.session_state.dieta),
+            label_visibility="collapsed"
+        )
+    
+    # Calcular totales por dieta
+    dieta_actual = DIETAS[st.session_state.dieta]
+    total_kcal = 0
+    total_p = 0
+    total_c = 0
+    total_g = 0
+    
+    for comida_key in ["desayuno", "media_mañana", "comida", "merienda", "cena", "pre_dormir"]:
+        if comida_key in dieta_actual:
+            comida_info = dieta_actual[comida_key]
+            for alimento_data in comida_info['principales']:
+                if len(alimento_data) == 3:
+                    alimento, cantidad, unidad = alimento_data
+                else:
+                    alimento, cantidad = alimento_data
+                
+                if alimento.lower() not in ["agua", "creatina monohidratada"]:
+                    macros = calcular_macros(alimento, cantidad)
+                    total_kcal += macros["kcal"]
+                    total_p += macros["p"]
+                    total_c += macros["c"]
+                    total_g += macros["g"]
+    
+    # Resumen en verde oliva
+    st.markdown(f"""
+    <div style="background: linear-gradient(135deg, #A8B894 0%, #96A882 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+        <h3 style="color: white; margin: 0 0 15px 0; text-align: center;">📊 Resumen Nutricional Diario - {st.session_state.dieta}</h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px;">
+            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="color: white; font-size: 24px; font-weight: bold;">{round(total_kcal)}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 12px;">kcal</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="color: white; font-size: 24px; font-weight: bold;">{round(total_p)}g</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 12px;">Proteína</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="color: white; font-size: 24px; font-weight: bold;">{round(total_c)}g</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 12px;">Carbohidratos</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
+                <div style="color: white; font-size: 24px; font-weight: bold;">{round(total_g)}g</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 12px;">Grasas</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # Recomendaciones adicionales
     with st.expander("💡 Recomendaciones Nutricionales y Suplementos"):
         col_rec1, col_rec2 = st.columns(2)
@@ -1338,7 +1407,7 @@ elif pagina == "Registros":
                 
                 items_registro.append({
                     "alimento": alimento,
-                    "recomendado": gramos_rec,
+                    "recomendado": cantidad,
                     "consumido": consumido,
                     "consumido_nombre": consumido_nombre
                 })
