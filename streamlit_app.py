@@ -782,6 +782,22 @@ def calcular_composicion(peso, altura):
         ("⚡ Peso muscular (kg)", 53.0): "Perfecto",
     }
 
+def calcular_superavit_calorico(peso, altura, edad=26):
+    """
+    Calcular calorías sugeridas para ganancia muscular
+    Usa fórmula Harris-Benedict + factor de actividad + superávit
+    """
+    # Harris-Benedict para hombres (kcal/día)
+    tmb = 88.362 + (13.397 * peso) + (4.799 * altura) - (5.677 * edad)
+    
+    # Factor de actividad (entrenamiento 5-6 veces/semana)
+    tdee = tmb * 1.55
+    
+    # Superávit calórico para ganancia muscular (350 kcal/día)
+    kcal_sugeridas = tdee + 350
+    
+    return round(kcal_sugeridas)
+
 # ========== HEADER ==========
 st.markdown("""
 <div style="text-align: center; margin-bottom: 1rem;">
@@ -882,10 +898,15 @@ if pagina == "Inicio":
     # Proyecciones mensuales (considerando ganancia de peso y masa muscular)
     meses = ["Mes 1", "Mes 2", "Mes 3", "Mes 4", "Mes 5", "Mes 6"]
     
-    # Datos iniciales
-    peso_inicial = 71.4
-    musculo_inicial = 40.6
-    grasa_inicial = 22.4
+    # Datos iniciales (reales actuales del usuario)
+    peso_inicial = st.session_state.peso_actual  # 69 kg (actual)
+    altura_cm = st.session_state.altura * 100  # Convertir a cm
+    edad = 26  # Dato conocido de Carlos
+    
+    # Composición inicial (basada en 22.4% grasa)
+    grasa_pct_inicial = 22.4
+    peso_grasa_inicial = (peso_inicial * grasa_pct_inicial) / 100
+    musculo_inicial = peso_inicial - peso_grasa_inicial
     
     # Ganancia esperada por mes (kg)
     ganancia_musculo_mes = 1.5
@@ -893,29 +914,53 @@ if pagina == "Inicio":
     reduccion_grasa_mes = 0.5
     
     datos_metas = []
+    
+    # AGREGAR MES 0 (INICIO)
+    kcal_mes_0 = calcular_superavit_calorico(peso_inicial, altura_cm, edad)
+    datos_metas.append({
+        "Mes": "Mes 0 (Inicio)",
+        "Superávit": f"{kcal_mes_0} cal.",
+        "100%": f"{peso_inicial:.1f}kg | {(musculo_inicial/peso_inicial)*100:.1f}% | {grasa_pct_inicial:.1f}%",
+        "90%": "—",
+        "85%": "—"
+    })
+    
+    # MESES 1-6
     for i, mes in enumerate(meses):
         mes_num = i + 1
         
-        # Proyecciones para 100% cumplimiento
+        # Peso proyectado a 100% cumplimiento
         peso_100 = peso_inicial + (ganancia_peso_mes * mes_num)
-        musculo_100 = musculo_inicial + (ganancia_musculo_mes * mes_num)
-        grasa_100 = max(grasa_inicial - (reduccion_grasa_mes * mes_num), 12)
+        
+        # Proyecciones para 100% cumplimiento
+        musculo_100_kg = musculo_inicial + (ganancia_musculo_mes * mes_num)
+        musculo_100_pct = (musculo_100_kg / peso_100) * 100
+        grasa_100_kg = peso_100 - musculo_100_kg
+        grasa_100_pct = (grasa_100_kg / peso_100) * 100
         
         # 90% cumplimiento (85% de ganancias)
         peso_90 = peso_inicial + (ganancia_peso_mes * mes_num * 0.85)
-        musculo_90 = musculo_inicial + (ganancia_musculo_mes * mes_num * 0.85)
-        grasa_90 = max(grasa_inicial - (reduccion_grasa_mes * mes_num * 0.85), 12)
+        musculo_90_kg = musculo_inicial + (ganancia_musculo_mes * mes_num * 0.85)
+        musculo_90_pct = (musculo_90_kg / peso_90) * 100
+        grasa_90_kg = peso_90 - musculo_90_kg
+        grasa_90_pct = (grasa_90_kg / peso_90) * 100
         
         # 85% cumplimiento (70% de ganancias)
         peso_85 = peso_inicial + (ganancia_peso_mes * mes_num * 0.70)
-        musculo_85 = musculo_inicial + (ganancia_musculo_mes * mes_num * 0.70)
-        grasa_85 = max(grasa_inicial - (reduccion_grasa_mes * mes_num * 0.70), 12)
+        musculo_85_kg = musculo_inicial + (ganancia_musculo_mes * mes_num * 0.70)
+        musculo_85_pct = (musculo_85_kg / peso_85) * 100
+        grasa_85_kg = peso_85 - musculo_85_kg
+        grasa_85_pct = (grasa_85_kg / peso_85) * 100
+        
+        # Calcular calorías según peso proyectado a 100%
+        kcal_mes = calcular_superavit_calorico(peso_100, altura_cm, edad)
         
         datos_metas.append({
             "Mes": mes,
-            "100%": f"{peso_100:.1f}kg | {musculo_100:.1f}% | {grasa_100:.1f}%",
-            "90%": f"{peso_90:.1f}kg | {musculo_90:.1f}% | {grasa_90:.1f}%",
-            "85%": f"{peso_85:.1f}kg | {musculo_85:.1f}% | {grasa_85:.1f}%"
+            "Superávit": f"{kcal_mes} cal.",
+            "100%": f"{peso_100:.1f}kg | {musculo_100_pct:.1f}% | {grasa_100_pct:.1f}%",
+            "90%": f"{peso_90:.1f}kg | {musculo_90_pct:.1f}% | {grasa_90_pct:.1f}%",
+            "85%": f"{peso_85:.1f}kg | {musculo_85_pct:.1f}% | {grasa_85_pct:.1f}%"
         })
     
     df_metas = pd.DataFrame(datos_metas)
@@ -927,6 +972,7 @@ if pagina == "Inicio":
         hide_index=True,
         column_config={
             "Mes": st.column_config.TextColumn(width="small"),
+            "Superávit": st.column_config.TextColumn(label="Superávit", width="small"),
             "100%": st.column_config.TextColumn(label="100% Cumplimiento", width="medium"),
             "90%": st.column_config.TextColumn(label="90% Cumplimiento", width="medium"),
             "85%": st.column_config.TextColumn(label="85% Cumplimiento", width="medium"),
@@ -993,8 +1039,10 @@ elif pagina == "Nutrición":
     st.markdown("## Plan Nutricional Detallado")
     
     # Primero: Selectbox de dieta (para saber cuál dieta calcular)
-    col_temp1, col_temp2 = st.columns([3, 1])
+    col_temp1, col_temp2 = st.columns([3, 1], gap="small")
+    
     with col_temp2:
+        st.markdown("<div style='margin-top: 8px;'>", unsafe_allow_html=True)
         st.session_state.dieta = st.selectbox(
             "Dieta",
             list(DIETAS.keys()),
@@ -1002,6 +1050,7 @@ elif pagina == "Nutrición":
             key="dieta_nutricion",
             label_visibility="collapsed"
         )
+        st.markdown("</div>", unsafe_allow_html=True)
     
     # Segundo: Calcular totales por dieta
     dieta_actual = DIETAS[st.session_state.dieta]
@@ -1124,10 +1173,6 @@ elif pagina == "Nutrición":
             - **Series de prueba:** 1-2 series al 50-70% de peso
             - **Beneficios:** Aumento de temperatura, activación neural, prevención de lesiones
             """)
-    
-    st.divider()
-    
-    st.divider()
     
     dieta = DIETAS[st.session_state.dieta]
     
