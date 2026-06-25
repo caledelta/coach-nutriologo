@@ -308,9 +308,11 @@ DIETAS = {
             }
         },
         "merienda": {
-            "nombre": "Pan + Atún + Aguacate",
-            "principales": [("Pan integral", 60), ("Atún", 150), ("Aguacate", 50)],
-            "alternativas": {}
+            "nombre": "Pan + Atún + Mantequilla de Maní",
+            "principales": [("Pan integral", 60), ("Atún", 150), ("Mantequilla de maní", 32)],
+            "alternativas": {
+                "Atún": ["Pechuga pollo"],
+            }
         },
         "cena": {
             "nombre": "Carne + Tubérculo",
@@ -347,9 +349,11 @@ DIETAS = {
             }
         },
         "merienda": {
-            "nombre": "Pan + Queso + Aguacate",
-            "principales": [("Pan integral", 60), ("Aguacate", 80)],
-            "alternativas": {}
+            "nombre": "Pan + Mantequilla de Maní + Fruta",
+            "principales": [("Pan integral", 60), ("Mantequilla de maní", 32), ("Manzana", 100)],
+            "alternativas": {
+                "Manzana": ["Plátano"],
+            }
         },
         "cena": {
             "nombre": "Lomo + Tubérculo",
@@ -381,8 +385,8 @@ DIETAS = {
             "alternativas": {}
         },
         "merienda": {
-            "nombre": "Pan + Atún + Aguacate",
-            "principales": [("Pan integral", 70), ("Atún", 150), ("Aguacate", 60)],
+            "nombre": "Pan + Mantequilla de Maní + Aguacate",
+            "principales": [("Pan integral", 70), ("Mantequilla de maní", 32), ("Aguacate", 40)],
             "alternativas": {}
         },
         "cena": {
