@@ -272,7 +272,7 @@ ALIMENTOS = {
     "Huevo": {"kcal": 155, "p": 13, "c": 1.1, "g": 11},
     "Plátano": {"kcal": 89, "p": 1.1, "c": 23, "g": 0.3},
     "Leche entera": {"kcal": 64, "p": 3.2, "c": 4.8, "g": 3.6},
-    "Leche deslactosada": {"kcal": 61, "p": 3.1, "c": 4.7, "g": 3.5},
+    "Leche Lala 100": {"kcal": 60, "p": 5.0, "c": 4.8, "g": 1.0},
     "Leche de coco": {"kcal": 230, "p": 2.3, "c": 5.5, "g": 24},
     "Yogur griego": {"kcal": 59, "p": 10, "c": 3.3, "g": 0.4},
     "Pechuga pollo": {"kcal": 165, "p": 31, "c": 0, "g": 3.6},
@@ -302,14 +302,14 @@ DIETAS = {
             "principales": [
                 ("Avena", 60, "g"),
                 ("Huevo", 100, "g"),
-                ("Leche deslactosada", 200, "mL"),
+                ("Leche Lala 100", 200, "mL"),
                 ("Plátano", 120, "g"),
                 ("Creatina monohidratada", 5, "g"),
                 ("Agua", 500, "mL")
             ],
             "alternativas": {
                 "Plátano": ["Manzana (alt. a Plátano)"],
-                "Leche deslactosada": ["Leche de coco (alt. a Leche deslactosada)"],
+                "Leche Lala 100": ["Leche de coco (alt. a Leche Lala 100)"],
             }
         },
         "media_mañana": {
@@ -324,7 +324,7 @@ DIETAS = {
         "comida": {
             "nombre": "Arroz + Pollo + Verduras + Agua",
             "principales": [
-                ("Arroz integral", 150, "g"),
+                ("Arroz integral", 180, "g"),
                 ("Pechuga pollo", 200, "g"),
                 ("Brócoli", 150, "g"),
                 ("Agua", 600, "mL")
@@ -349,12 +349,12 @@ DIETAS = {
             "nombre": "Carne + Tubérculo + Agua",
             "principales": [
                 ("Carne magra", 200, "g"),
-                ("Camote", 150, "g"),
+                ("Papa", 150, "g"),
                 ("Agua", 500, "mL")
             ],
             "alternativas": {
-                "Camote": ["Papa (alt. a Camote)"],
-                "Carne magra": ["Salmón (alt. a Carne magra)"],
+                "Papa": ["Plátano (alt. a Papa)"],
+                "Carne magra": ["Atún (alt. a Carne magra)"],
             }
         },
         "pre_dormir": {
@@ -367,11 +367,12 @@ DIETAS = {
     },
     "Carnes Rojas": {
         "desayuno": {
-            "nombre": "Pan + Huevo + Fruta + Agua + Creatina",
+            "nombre": "Pan + Huevo + Fruta + Mantequilla de Maní + Agua + Creatina",
             "principales": [
-                ("Pan integral", 80, "g"),
+                ("Pan integral", 100, "g"),
                 ("Huevo", 100, "g"),
                 ("Manzana", 150, "g"),
+                ("Mantequilla de maní", 20, "g"),
                 ("Creatina monohidratada", 5, "g"),
                 ("Agua", 500, "mL")
             ],
@@ -391,7 +392,7 @@ DIETAS = {
         "comida": {
             "nombre": "Arroz + Carne + Verduras + Agua",
             "principales": [
-                ("Arroz integral", 150, "g"),
+                ("Arroz integral", 180, "g"),
                 ("Carne magra", 220, "g"),
                 ("Brócoli", 150, "g"),
                 ("Agua", 600, "mL")
@@ -437,7 +438,7 @@ DIETAS = {
             "principales": [
                 ("Avena", 70, "g"),
                 ("Claras de huevo", 200, "mL"),
-                ("Leche deslactosada", 180, "mL"),
+                ("Leche Lala 100", 180, "mL"),
                 ("Plátano", 120, "g"),
                 ("Creatina monohidratada", 5, "g"),
                 ("Agua", 500, "mL")
@@ -456,7 +457,7 @@ DIETAS = {
         "comida": {
             "nombre": "Pasta + Tilapia + Verduras + Agua",
             "principales": [
-                ("Pasta integral", 150, "g"),
+                ("Pasta integral", 180, "g"),
                 ("Filete de tilapia", 200, "g"),
                 ("Brócoli", 150, "g"),
                 ("Agua", 600, "mL")
@@ -477,11 +478,11 @@ DIETAS = {
             "nombre": "Tilapia + Tubérculo + Agua",
             "principales": [
                 ("Filete de tilapia", 200, "g"),
-                ("Camote", 150, "g"),
+                ("Papa", 150, "g"),
                 ("Agua", 500, "mL")
             ],
             "alternativas": {
-                "Camote": ["Papa (alt. a Camote)"],
+                "Papa": ["Plátano (alt. a Papa)"],
             }
         },
         "pre_dormir": {
