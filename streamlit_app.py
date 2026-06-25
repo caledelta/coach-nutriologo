@@ -288,17 +288,18 @@ ALIMENTOS = {
 DIETAS = {
     "Pollo": {
         "desayuno": {
-            "nombre": "Avena + Huevos + Fruta + Agua",
+            "nombre": "Avena + Huevos + Fruta + Agua + Creatina",
             "principales": [
                 ("Avena", 60, "g"),
                 ("Huevo", 100, "g"),
-                ("Leche entera", 200, "mL"),
+                ("Leche almendras", 200, "mL"),
                 ("Plátano", 120, "g"),
+                ("Creatina monohidratada", 5, "g"),
                 ("Agua", 500, "mL")
             ],
             "alternativas": {
                 "Plátano": ["Manzana (alt. a Plátano)"],
-                "Leche entera": ["Leche deslactosada (alt. a Leche entera)"],
+                "Leche almendras": ["Leche de coco (alt. a Leche almendras)"],
             }
         },
         "media_mañana": {
@@ -347,9 +348,9 @@ DIETAS = {
             }
         },
         "pre_dormir": {
-            "nombre": "Leche Entera",
+            "nombre": "Yogur Griego",
             "principales": [
-                ("Leche entera", 250, "mL")
+                ("Yogur griego", 250, "g")
             ],
             "alternativas": {}
         }
@@ -421,12 +422,13 @@ DIETAS = {
     },
     "Pescado": {
         "desayuno": {
-            "nombre": "Avena + Claras + Fruta + Agua",
+            "nombre": "Avena + Claras + Fruta + Agua + Creatina",
             "principales": [
                 ("Avena", 70, "g"),
                 ("Claras de huevo", 200, "mL"),
-                ("Leche entera", 180, "mL"),
+                ("Leche almendras", 180, "mL"),
                 ("Plátano", 120, "g"),
+                ("Creatina monohidratada", 5, "g"),
                 ("Agua", 500, "mL")
             ],
             "alternativas": {}
@@ -472,9 +474,9 @@ DIETAS = {
             }
         },
         "pre_dormir": {
-            "nombre": "Leche Entera",
+            "nombre": "Yogur Griego",
             "principales": [
-                ("Leche entera", 250, "mL")
+                ("Yogur griego", 250, "g")
             ],
             "alternativas": {}
         }
@@ -1119,7 +1121,7 @@ elif pagina == "Nutrición":
                 macros = calcular_macros(alt_nombre, 150)
                 tabla.append({
                     "Alimento": f"↔️ {alternativa}",
-                    "Cantidad": "150 g (ref.)",
+                    "Cantidad": "150 g",
                     "kcal": macros["kcal"],
                     "Proteína (g)": macros["p"],
                     "Carbos (g)": macros["c"],
@@ -1127,7 +1129,18 @@ elif pagina == "Nutrición":
                 })
         
         df = pd.DataFrame(tabla)
-        st.dataframe(df, use_container_width=True, hide_index=True)
+        
+        # Configurar ancho de columnas
+        st.dataframe(
+            df, 
+            use_container_width=True, 
+            hide_index=True,
+            column_config={
+                "Alimento": st.column_config.TextColumn(width="medium"),
+                "Cantidad": st.column_config.TextColumn(width="small"),
+                "kcal": st.column_config.NumberColumn(width="small"),
+            }
+        )
         
         col1, col2, col3, col4 = st.columns(4)
         with col1: st.metric("kcal", round(total_macros["kcal"]))
@@ -1283,12 +1296,29 @@ elif pagina == "Registros":
             comida_info = dieta_actual[comida_key]
             st.markdown(f"*{comida_info['nombre']}*")
             
-            for alimento, gramos_rec in comida_info['principales']:
+            for alimento_data in comida_info['principales']:
+                # Manejar tuplas de 2 o 3 elementos
+                if len(alimento_data) == 3:
+                    alimento, cantidad, unidad = alimento_data
+                else:
+                    alimento, cantidad = alimento_data
+                    unidad = "g"
+                
                 col_a, col_b, col_c = st.columns([1.5, 1, 1.2])
                 
                 # Obtener alternativas si existen
                 alternativas_disp = comida_info.get('alternativas', {}).get(alimento, [])
-                opciones = [alimento] + alternativas_disp
+                
+                # Limpiar alternativas (remover "(alt. a ...)" para mostrar nombres claros)
+                alternativas_limpias = []
+                for alt in alternativas_disp:
+                    if "(alt. a" in alt:
+                        nombre_alt = alt.split(" (alt. a")[0]
+                    else:
+                        nombre_alt = alt
+                    alternativas_limpias.append(nombre_alt)
+                
+                opciones = [alimento] + alternativas_limpias
                 
                 with col_a:
                     consumido_nombre = st.selectbox(
@@ -1297,11 +1327,11 @@ elif pagina == "Registros":
                         key=f"alt_{alimento}"
                     )
                 with col_b:
-                    st.text(f"{gramos_rec}g")
+                    st.text(f"{cantidad} {unidad}")
                 with col_c:
                     consumido = st.number_input(
                         f"Consumo", 
-                        value=gramos_rec, 
+                        value=cantidad, 
                         key=f"cons_{alimento}", 
                         label_visibility="collapsed"
                     )
