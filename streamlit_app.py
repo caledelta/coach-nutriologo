@@ -992,34 +992,9 @@ if pagina == "Inicio":
 elif pagina == "Nutrición":
     st.markdown("## Plan Nutricional Detallado")
     
-    # Selector de dieta
-    col_resumen, col_dieta = st.columns([3, 1])
-    
-    # Barra de resumen compacta
-    with col_resumen:
-        st.markdown(f"""
-        <div style="background: linear-gradient(135deg, #A8B894 0%, #96A882 100%); padding: 12px 15px; border-radius: 8px; display: flex; justify-content: space-around; align-items: center; gap: 10px;">
-            <div style="text-align: center; flex: 1;">
-                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_kcal)}</div>
-                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">kcal</div>
-            </div>
-            <div style="text-align: center; flex: 1;">
-                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_p)}g</div>
-                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Proteína</div>
-            </div>
-            <div style="text-align: center; flex: 1;">
-                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_c)}g</div>
-                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Carbos</div>
-            </div>
-            <div style="text-align: center; flex: 1;">
-                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_g)}g</div>
-                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Grasas</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-    
-    # Selectbox de dieta
-    with col_dieta:
+    # Primero: Selectbox de dieta (para saber cuál dieta calcular)
+    col_temp1, col_temp2 = st.columns([3, 1])
+    with col_temp2:
         st.session_state.dieta = st.selectbox(
             "Dieta",
             list(DIETAS.keys()),
@@ -1028,7 +1003,7 @@ elif pagina == "Nutrición":
             label_visibility="collapsed"
         )
     
-    # Calcular totales por dieta
+    # Segundo: Calcular totales por dieta
     dieta_actual = DIETAS[st.session_state.dieta]
     total_kcal = 0
     total_p = 0
@@ -1050,6 +1025,31 @@ elif pagina == "Nutrición":
                     total_p += macros["p"]
                     total_c += macros["c"]
                     total_g += macros["g"]
+    
+    # Tercero: Mostrar barra de resumen compacta
+    col_resumen, col_vacio = st.columns([3, 1])
+    
+    with col_resumen:
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #A8B894 0%, #96A882 100%); padding: 12px 15px; border-radius: 8px; display: flex; justify-content: space-around; align-items: center; gap: 10px;">
+            <div style="text-align: center; flex: 1;">
+                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_kcal)}</div>
+                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">kcal</div>
+            </div>
+            <div style="text-align: center; flex: 1;">
+                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_p)}g</div>
+                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Proteína</div>
+            </div>
+            <div style="text-align: center; flex: 1;">
+                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_c)}g</div>
+                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Carbos</div>
+            </div>
+            <div style="text-align: center; flex: 1;">
+                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_g)}g</div>
+                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Grasas</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
     
     # Recomendaciones adicionales
     with st.expander("💡 Recomendaciones Nutricionales y Suplementos"):
