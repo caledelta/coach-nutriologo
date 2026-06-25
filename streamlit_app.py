@@ -999,6 +999,7 @@ elif pagina == "Nutrición":
             "Elige tu dieta",
             list(DIETAS.keys()),
             index=list(DIETAS.keys()).index(st.session_state.dieta),
+            key="dieta_nutricion",
             label_visibility="collapsed"
         )
     
@@ -1028,23 +1029,22 @@ elif pagina == "Nutrición":
     # Resumen en verde oliva
     st.markdown(f"""
     <div style="background: linear-gradient(135deg, #A8B894 0%, #96A882 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-        <h3 style="color: white; margin: 0 0 15px 0; text-align: center;">📊 Resumen Nutricional Diario - {st.session_state.dieta}</h3>
         <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px;">
-            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
-                <div style="color: white; font-size: 24px; font-weight: bold;">{round(total_kcal)}</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 12px;">kcal</div>
+            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="color: white; font-size: 32px; font-weight: bold;">{round(total_kcal)}</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-top: 5px;">kcal</div>
             </div>
-            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
-                <div style="color: white; font-size: 24px; font-weight: bold;">{round(total_p)}g</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 12px;">Proteína</div>
+            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="color: white; font-size: 32px; font-weight: bold;">{round(total_p)}g</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-top: 5px;">Proteína</div>
             </div>
-            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
-                <div style="color: white; font-size: 24px; font-weight: bold;">{round(total_c)}g</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 12px;">Carbohidratos</div>
+            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="color: white; font-size: 32px; font-weight: bold;">{round(total_c)}g</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-top: 5px;">Carbohidratos</div>
             </div>
-            <div style="background: rgba(255,255,255,0.2); padding: 12px; border-radius: 8px; text-align: center;">
-                <div style="color: white; font-size: 24px; font-weight: bold;">{round(total_g)}g</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 12px;">Grasas</div>
+            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
+                <div style="color: white; font-size: 32px; font-weight: bold;">{round(total_g)}g</div>
+                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-top: 5px;">Grasas</div>
             </div>
         </div>
     </div>
@@ -1128,7 +1128,7 @@ elif pagina == "Nutrición":
     
     col1, col2 = st.columns([0.7, 0.3])
     with col2:
-        st.session_state.dieta = st.selectbox("Elige tu dieta", list(DIETAS.keys()), label_visibility="collapsed")
+        st.session_state.dieta = st.selectbox("Elige tu dieta", list(DIETAS.keys()), key="dieta_registros", label_visibility="collapsed")
     
     st.divider()
     
