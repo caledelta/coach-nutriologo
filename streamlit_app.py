@@ -284,121 +284,198 @@ ALIMENTOS = {
     "Salmon": {"kcal": 208, "p": 20, "c": 0, "g": 13},
 }
 
-# ========== DIETAS CON ALTERNATIVAS ==========
+# ========== DIETAS CON ALTERNATIVAS Y UNIDADES ==========
 DIETAS = {
     "Pollo": {
         "desayuno": {
-            "nombre": "Avena + Huevos + Fruta",
-            "principales": [("Avena", 60), ("Huevo", 100), ("Leche entera", 200), ("Plátano", 120)],
+            "nombre": "Avena + Huevos + Fruta + Agua",
+            "principales": [
+                ("Avena", 60, "g"),
+                ("Huevo", 100, "g"),
+                ("Leche entera", 200, "mL"),
+                ("Plátano", 120, "g"),
+                ("Agua", 500, "mL")
+            ],
             "alternativas": {
-                "Plátano": ["Manzana"],
-                "Leche entera": ["Leche entera"],
+                "Plátano": ["Manzana (alt. a Plátano)"],
+                "Leche entera": ["Leche deslactosada (alt. a Leche entera)"],
             }
         },
         "media_mañana": {
-            "nombre": "Yogur Griego + Frutos",
-            "principales": [("Yogur griego", 200), ("Plátano", 100)],
+            "nombre": "Yogur Griego + Frutos + Agua",
+            "principales": [
+                ("Yogur griego", 200, "g"),
+                ("Plátano", 100, "g"),
+                ("Agua", 400, "mL")
+            ],
             "alternativas": {}
         },
         "comida": {
-            "nombre": "Arroz + Pollo + Verduras",
-            "principales": [("Arroz integral", 150), ("Pechuga pollo", 200), ("Brócoli", 150)],
+            "nombre": "Arroz + Pollo + Verduras + Agua",
+            "principales": [
+                ("Arroz integral", 150, "g"),
+                ("Pechuga pollo", 200, "g"),
+                ("Brócoli", 150, "g"),
+                ("Agua", 600, "mL")
+            ],
             "alternativas": {
-                "Pechuga pollo": ["Carne magra", "Atún"],
+                "Pechuga pollo": ["Carne magra (alt. a Pollo)", "Atún (alt. a Pollo)"],
             }
         },
         "merienda": {
-            "nombre": "Pan + Atún + Mantequilla de Maní",
-            "principales": [("Pan integral", 60), ("Atún", 150), ("Mantequilla de maní", 32)],
+            "nombre": "Pan + Atún + Mantequilla de Maní + Agua",
+            "principales": [
+                ("Pan integral", 60, "g"),
+                ("Atún", 150, "g"),
+                ("Mantequilla de maní", 32, "g"),
+                ("Agua", 400, "mL")
+            ],
             "alternativas": {
-                "Atún": ["Pechuga pollo"],
+                "Atún": ["Pechuga pollo (alt. a Atún)"],
             }
         },
         "cena": {
-            "nombre": "Carne + Tubérculo",
-            "principales": [("Carne magra", 200), ("Camote", 150)],
+            "nombre": "Carne + Tubérculo + Agua",
+            "principales": [
+                ("Carne magra", 200, "g"),
+                ("Camote", 150, "g"),
+                ("Agua", 500, "mL")
+            ],
             "alternativas": {
-                "Camote": ["Papa"],
-                "Carne magra": ["Salmon"],
+                "Camote": ["Papa (alt. a Camote)"],
+                "Carne magra": ["Salmón (alt. a Carne magra)"],
             }
         },
         "pre_dormir": {
             "nombre": "Leche Entera",
-            "principales": [("Leche entera", 250)],
+            "principales": [
+                ("Leche entera", 250, "mL")
+            ],
             "alternativas": {}
         }
     },
     "Carnes Rojas": {
         "desayuno": {
-            "nombre": "Pan + Huevo + Fruta",
-            "principales": [("Pan integral", 80), ("Huevo", 100), ("Manzana", 150)],
+            "nombre": "Pan + Huevo + Fruta + Agua",
+            "principales": [
+                ("Pan integral", 80, "g"),
+                ("Huevo", 100, "g"),
+                ("Manzana", 150, "g"),
+                ("Agua", 500, "mL")
+            ],
             "alternativas": {
-                "Manzana": ["Plátano"],
+                "Manzana": ["Plátano (alt. a Manzana)"],
             }
         },
         "media_mañana": {
-            "nombre": "Yogur + Frutos",
-            "principales": [("Yogur griego", 200), ("Plátano", 100)],
+            "nombre": "Yogur + Frutos + Agua",
+            "principales": [
+                ("Yogur griego", 200, "g"),
+                ("Plátano", 100, "g"),
+                ("Agua", 400, "mL")
+            ],
             "alternativas": {}
         },
         "comida": {
-            "nombre": "Arroz + Carne + Verduras",
-            "principales": [("Arroz integral", 150), ("Carne magra", 220), ("Brócoli", 150)],
+            "nombre": "Arroz + Carne + Verduras + Agua",
+            "principales": [
+                ("Arroz integral", 150, "g"),
+                ("Carne magra", 220, "g"),
+                ("Brócoli", 150, "g"),
+                ("Agua", 600, "mL")
+            ],
             "alternativas": {
-                "Carne magra": ["Pechuga pollo"],
+                "Carne magra": ["Pechuga pollo (alt. a Carne)"],
             }
         },
         "merienda": {
-            "nombre": "Pan + Mantequilla de Maní + Fruta",
-            "principales": [("Pan integral", 60), ("Mantequilla de maní", 32), ("Manzana", 100)],
+            "nombre": "Pan + Mantequilla de Maní + Fruta + Agua",
+            "principales": [
+                ("Pan integral", 60, "g"),
+                ("Mantequilla de maní", 32, "g"),
+                ("Manzana", 100, "g"),
+                ("Agua", 400, "mL")
+            ],
             "alternativas": {
-                "Manzana": ["Plátano"],
+                "Manzana": ["Plátano (alt. a Manzana)"],
             }
         },
         "cena": {
-            "nombre": "Lomo + Tubérculo",
-            "principales": [("Carne magra", 220), ("Camote", 150)],
+            "nombre": "Lomo + Tubérculo + Agua",
+            "principales": [
+                ("Carne magra", 220, "g"),
+                ("Camote", 150, "g"),
+                ("Agua", 500, "mL")
+            ],
             "alternativas": {
-                "Camote": ["Papa"],
+                "Camote": ["Papa (alt. a Camote)"],
             }
         },
         "pre_dormir": {
             "nombre": "Yogur Griego",
-            "principales": [("Yogur griego", 250)],
+            "principales": [
+                ("Yogur griego", 250, "g")
+            ],
             "alternativas": {}
         }
     },
     "Pescado": {
         "desayuno": {
-            "nombre": "Avena + Claras + Fruta",
-            "principales": [("Avena", 70), ("Claras de huevo", 200), ("Leche entera", 180), ("Plátano", 120)],
+            "nombre": "Avena + Claras + Fruta + Agua",
+            "principales": [
+                ("Avena", 70, "g"),
+                ("Claras de huevo", 200, "mL"),
+                ("Leche entera", 180, "mL"),
+                ("Plátano", 120, "g"),
+                ("Agua", 500, "mL")
+            ],
             "alternativas": {}
         },
         "media_mañana": {
-            "nombre": "Yogur + Frutos",
-            "principales": [("Yogur griego", 200), ("Manzana", 100)],
+            "nombre": "Yogur + Frutos + Agua",
+            "principales": [
+                ("Yogur griego", 200, "g"),
+                ("Manzana", 100, "g"),
+                ("Agua", 400, "mL")
+            ],
             "alternativas": {}
         },
         "comida": {
-            "nombre": "Pasta + Filete de Tilapia + Verduras",
-            "principales": [("Pasta integral", 150), ("Filete de tilapia", 200), ("Brócoli", 150)],
+            "nombre": "Pasta + Tilapia + Verduras + Agua",
+            "principales": [
+                ("Pasta integral", 150, "g"),
+                ("Filete de tilapia", 200, "g"),
+                ("Brócoli", 150, "g"),
+                ("Agua", 600, "mL")
+            ],
             "alternativas": {}
         },
         "merienda": {
-            "nombre": "Pan + Mantequilla de Maní + Aguacate",
-            "principales": [("Pan integral", 70), ("Mantequilla de maní", 32), ("Aguacate", 40)],
+            "nombre": "Pan + Mantequilla de Maní + Aguacate + Agua",
+            "principales": [
+                ("Pan integral", 70, "g"),
+                ("Mantequilla de maní", 32, "g"),
+                ("Aguacate", 40, "g"),
+                ("Agua", 400, "mL")
+            ],
             "alternativas": {}
         },
         "cena": {
-            "nombre": "Filete de Tilapia + Tubérculo",
-            "principales": [("Filete de tilapia", 200), ("Camote", 150)],
+            "nombre": "Tilapia + Tubérculo + Agua",
+            "principales": [
+                ("Filete de tilapia", 200, "g"),
+                ("Camote", 150, "g"),
+                ("Agua", 500, "mL")
+            ],
             "alternativas": {
-                "Camote": ["Papa"],
+                "Camote": ["Papa (alt. a Camote)"],
             }
         },
         "pre_dormir": {
             "nombre": "Leche Entera",
-            "principales": [("Leche entera", 250)],
+            "principales": [
+                ("Leche entera", 250, "mL")
+            ],
             "alternativas": {}
         }
     }
@@ -995,25 +1072,54 @@ elif pagina == "Nutrición":
         tabla = []
         total_macros = {"kcal": 0, "p": 0, "c": 0, "g": 0}
         
-        for alimento, gramos in comida_info['principales']:
-            macros = calcular_macros(alimento, gramos)
-            tabla.append({
-                "Alimento": alimento,
-                "Gramos": gramos,
-                "kcal": macros["kcal"],
-                "Proteína (g)": macros["p"],
-                "Carbos (g)": macros["c"],
-                "Grasas (g)": macros["g"],
-            })
-            for key in total_macros:
-                total_macros[key] += macros[key]
+        for alimento_data in comida_info['principales']:
+            # Soportar tanto tuplas de 2 elementos (legacy) como de 3 (nuevo con unidades)
+            if len(alimento_data) == 3:
+                alimento, cantidad, unidad = alimento_data
+                cantidad_display = f"{cantidad} {unidad}"
+            else:
+                alimento, cantidad = alimento_data
+                unidad = "g"
+                cantidad_display = f"{cantidad} {unidad}"
+            
+            # No calcular macros para agua pura
+            if alimento.lower() == "agua":
+                tabla.append({
+                    "Alimento": alimento,
+                    "Cantidad": cantidad_display,
+                    "kcal": 0,
+                    "Proteína (g)": 0,
+                    "Carbos (g)": 0,
+                    "Grasas (g)": 0,
+                })
+            else:
+                # Usar cantidad en gramos para calcular macros (asumiendo bebidas en mL tienen equivalente)
+                macros = calcular_macros(alimento, cantidad)
+                tabla.append({
+                    "Alimento": alimento,
+                    "Cantidad": cantidad_display,
+                    "kcal": macros["kcal"],
+                    "Proteína (g)": macros["p"],
+                    "Carbos (g)": macros["c"],
+                    "Grasas (g)": macros["g"],
+                })
+                for key in total_macros:
+                    total_macros[key] += macros[key]
         
+        # Alternativas con formato claro: "Manzana (alt. a Plátano)"
         for alimento_original, alternativas in comida_info['alternativas'].items():
             for alternativa in alternativas:
-                macros = calcular_macros(alternativa, 150)
+                # Extraer nombre de alternativa si tiene el formato "(alt. a ...)"
+                if "(alt. a" in alternativa:
+                    alt_nombre = alternativa.split(" (alt. a")[0]
+                else:
+                    alt_nombre = alternativa
+                    alternativa = f"{alternativa} (alt. a {alimento_original})"
+                
+                macros = calcular_macros(alt_nombre, 150)
                 tabla.append({
-                    "Alimento": f"⚙️ {alternativa} (alt.)",
-                    "Gramos": "150",
+                    "Alimento": f"↔️ {alternativa}",
+                    "Cantidad": "150 g (ref.)",
                     "kcal": macros["kcal"],
                     "Proteína (g)": macros["p"],
                     "Carbos (g)": macros["c"],
