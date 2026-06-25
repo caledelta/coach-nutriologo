@@ -993,10 +993,35 @@ elif pagina == "Nutrición":
     st.markdown("## Plan Nutricional Detallado")
     
     # Selector de dieta
-    col_dieta, col_empty = st.columns([2, 4])
+    col_resumen, col_dieta = st.columns([3, 1])
+    
+    # Barra de resumen compacta
+    with col_resumen:
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, #A8B894 0%, #96A882 100%); padding: 12px 15px; border-radius: 8px; display: flex; justify-content: space-around; align-items: center; gap: 10px;">
+            <div style="text-align: center; flex: 1;">
+                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_kcal)}</div>
+                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">kcal</div>
+            </div>
+            <div style="text-align: center; flex: 1;">
+                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_p)}g</div>
+                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Proteína</div>
+            </div>
+            <div style="text-align: center; flex: 1;">
+                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_c)}g</div>
+                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Carbos</div>
+            </div>
+            <div style="text-align: center; flex: 1;">
+                <div style="color: white; font-size: 26px; font-weight: bold; line-height: 1;">{round(total_g)}g</div>
+                <div style="color: rgba(255,255,255,0.85); font-size: 11px; margin-top: 2px;">Grasas</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+    
+    # Selectbox de dieta
     with col_dieta:
         st.session_state.dieta = st.selectbox(
-            "Elige tu dieta",
+            "Dieta",
             list(DIETAS.keys()),
             index=list(DIETAS.keys()).index(st.session_state.dieta),
             key="dieta_nutricion",
@@ -1025,30 +1050,6 @@ elif pagina == "Nutrición":
                     total_p += macros["p"]
                     total_c += macros["c"]
                     total_g += macros["g"]
-    
-    # Resumen en verde oliva
-    st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #A8B894 0%, #96A882 100%); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px;">
-            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-                <div style="color: white; font-size: 32px; font-weight: bold;">{round(total_kcal)}</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-top: 5px;">kcal</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-                <div style="color: white; font-size: 32px; font-weight: bold;">{round(total_p)}g</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-top: 5px;">Proteína</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-                <div style="color: white; font-size: 32px; font-weight: bold;">{round(total_c)}g</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-top: 5px;">Carbohidratos</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; text-align: center;">
-                <div style="color: white; font-size: 32px; font-weight: bold;">{round(total_g)}g</div>
-                <div style="color: rgba(255,255,255,0.9); font-size: 13px; margin-top: 5px;">Grasas</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
     
     # Recomendaciones adicionales
     with st.expander("💡 Recomendaciones Nutricionales y Suplementos"):
@@ -1125,10 +1126,6 @@ elif pagina == "Nutrición":
             """)
     
     st.divider()
-    
-    col1, col2 = st.columns([0.7, 0.3])
-    with col2:
-        st.session_state.dieta = st.selectbox("Elige tu dieta", list(DIETAS.keys()), key="dieta_registros", label_visibility="collapsed")
     
     st.divider()
     
