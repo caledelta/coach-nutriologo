@@ -1399,7 +1399,8 @@ elif pagina == "Registros":
         
         # Mostrar alimentos de la dieta actual
         dieta_actual = DIETAS[st.session_state.dieta]
-        comida_key = comida_tipo.lower().replace(" ", "_")
+        # Convertir comida_tipo a clave de dieta (reemplazar guiones y espacios por guiones bajos)
+        comida_key = comida_tipo.lower().replace(" ", "_").replace("-", "_")
         
         items_registro = []
         
