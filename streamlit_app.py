@@ -1423,19 +1423,25 @@ elif pagina == "Registros":
                 # Limpiar alternativas y crear lista con indicadores
                 opciones = [f"✓ {alimento}"]  # Alimento principal con ✓
                 
-                for alt in alternativas_disp:
-                    if "(alt. a" in alt:
-                        nombre_alt = alt.split(" (alt. a")[0]
-                    else:
-                        nombre_alt = alt
-                    # Agregar ↔️ para alternativas (se mostrarán en verde oliva)
-                    opciones.append(f"↔️ {nombre_alt}")
+                # Agregar alternativas si existen
+                if alternativas_disp:
+                    for alt in alternativas_disp:
+                        if "(alt. a" in alt:
+                            nombre_alt = alt.split(" (alt. a")[0]
+                        else:
+                            nombre_alt = alt
+                        # Agregar ↔️ para alternativas
+                        opciones.append(f"↔️ {nombre_alt}")
+                
+                # Indicador de opciones disponibles
+                num_opciones = len(opciones)
+                badge = "" if num_opciones == 1 else f" +{num_opciones-1}"
                 
                 with col_a:
                     consumido_nombre = st.selectbox(
-                        f"Consumido (de {alimento})", 
-                        opciones, 
-                        key=f"alt_{alimento}"
+                        f"Consumido (de {alimento}){badge}", 
+                        opciones,
+                        key=f"sel_{comida_key}_{alimento}"
                     )
                 with col_b:
                     st.text(f"{cantidad} {unidad}")
