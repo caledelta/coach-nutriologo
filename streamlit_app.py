@@ -9,7 +9,7 @@ from db import (
     guardar_progreso_entrenamiento, obtener_progreso_entrenamiento,
     obtener_progreso_por_ejercicio, validar_cumplimiento_dia,
     guardar_configuracion, obtener_configuracion,
-    actualizar_registro_nutricion, eliminar_registro_nutricion,
+    actualizar_registro_nutricion, eliminar_registro_nutricion, eliminar_comida_completa,
     guardar_peso_diario, obtener_pesos_diarios, eliminar_peso_diario,
     actualizar_registro_entrenamiento, eliminar_registro_entrenamiento
 )
@@ -1375,7 +1375,16 @@ elif pagina == "Registros":
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            fecha = st.date_input("Fecha", datetime.today(), key="fecha_nut")
+            # Restricción: solo hoy y hasta 30 días atrás
+            fecha_min = datetime.today() - timedelta(days=30)
+            fecha_max = datetime.today()
+            fecha = st.date_input(
+                "Fecha", 
+                datetime.today(), 
+                min_value=fecha_min,
+                max_value=fecha_max,
+                key="fecha_nut"
+            )
         with col2:
             comida_tipo = st.selectbox("Comida", ["Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Pre-dormir"])
         with col3:
@@ -1550,6 +1559,22 @@ elif pagina == "Registros":
                         
                         # Sección de edición
                         with st.expander("✏️ Editar o eliminar registros"):
+                            # Opción para eliminar comida completa
+                            st.markdown("**🗑️ Eliminar comida completa:**")
+                            col_del1, col_del2 = st.columns([3, 1])
+                            with col_del1:
+                                st.info(f"Eliminar todos los alimentos de {comida_tipo} de {fecha_fecha}")
+                            with col_del2:
+                                if st.button("Eliminar comida", key=f"eliminar_comida_{fecha_fecha}_{comida_tipo}", type="secondary"):
+                                    if eliminar_comida_completa(fecha_fecha, comida_tipo.lower().replace(" ", "_")):
+                                        st.success(f"✓ {comida_tipo} eliminada")
+                                        st.rerun()
+                                    else:
+                                        st.error(f"Error al eliminar {comida_tipo}")
+                            
+                            st.divider()
+                            st.markdown("**✏️ Editar alimentos individuales:**")
+                            
                             for i, reg in enumerate(registros):
                                 col_e1, col_e2, col_e3 = st.columns([0.5, 0.25, 0.25])
                                 with col_e1:
@@ -1603,6 +1628,7 @@ elif pagina == "Registros":
         }
         
         datos_grafica = []
+        meses_involucrados = set()
         
         for i in range(7, 0, -1):  # Últimos 7 días
             fecha_grafica = (datetime.today() - timedelta(days=i)).strftime("%Y-%m-%d")
@@ -1610,6 +1636,8 @@ elif pagina == "Registros":
             
             fecha_obj = datetime.today() - timedelta(days=i)
             promedio_dia = detalles.get("promedio", 0) if detalles else 0
+            
+            meses_involucrados.add(fecha_obj.month)
             
             datos_grafica.append({
                 "Día": fecha_obj.strftime("%d"),
@@ -1637,14 +1665,22 @@ elif pagina == "Registros":
                 )
             ])
             
-            # Mes en español
-            mes_numero = datetime.today().month
+            # Determinar título del mes
             año = datetime.today().year
-            mes_hoy = f"{meses_es[mes_numero]} {año}"
+            if len(meses_involucrados) == 1:
+                # Un solo mes
+                mes_numero = list(meses_involucrados)[0]
+                mes_titulo = f"{meses_es[mes_numero]} {año}"
+            else:
+                # Dos meses consecutivos
+                meses_sorted = sorted(meses_involucrados)
+                mes1 = meses_es[meses_sorted[0]]
+                mes2 = meses_es[meses_sorted[1]]
+                mes_titulo = f"{mes1} - {mes2} {año}"
             
             fig.update_layout(
                 title=dict(
-                    text=f"<i style='font-size:16px; color:#666; font-weight:normal'>{mes_hoy}</i>",
+                    text=f"<i style='font-size:16px; color:#666; font-weight:normal'>{mes_titulo}</i>",
                     x=0.5,
                     xanchor="center",
                     y=0.98,
