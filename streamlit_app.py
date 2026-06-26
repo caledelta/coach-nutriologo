@@ -1371,7 +1371,7 @@ elif pagina == "Registros":
     
     with tab_nut:
         st.markdown("### Registrar Consumo Nutricional")
-        st.markdown("<p style='color: #A8B894; font-size: 0.9rem; margin: 5px 0 15px 0;'><b>[PRINCIPAL]</b> Alimento recomendado | <b style='color: #A8B894;'>[ALT]</b> Alternativas disponibles</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #A8B894; font-size: 0.9rem; margin: 5px 0 15px 0;'>Nombre | <b style='color: #A8B894;'>[ALT]</b> Alternativas disponibles</p>", unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -1421,9 +1421,8 @@ elif pagina == "Registros":
                 # Obtener alternativas si existen
                 alternativas_disp = comida_info.get('alternativas', {}).get(alimento, [])
                 
-                # Limpiar alternativas y crear lista con indicadores
-                # Usar prefijos simples sin caracteres especiales
-                opciones = [f"[PRINCIPAL] {alimento}"]  # Alimento principal
+                # Crear lista de opciones: principal sin prefijo, alternativas con [ALT]
+                opciones = [alimento]  # Alimento principal SIN prefijo
                 
                 # Agregar alternativas si existen
                 if alternativas_disp:
@@ -1432,7 +1431,7 @@ elif pagina == "Registros":
                             nombre_alt = alt.split(" (alt. a")[0]
                         else:
                             nombre_alt = alt
-                        # Agregar prefijo para alternativas
+                        # Agregar solo [ALT] para alternativas
                         opciones.append(f"[ALT] {nombre_alt}")
                 
                 # Indicador de opciones disponibles
@@ -1460,8 +1459,8 @@ elif pagina == "Registros":
                         label_visibility="collapsed"
                     )
                 
-                # Limpiar nombre para guardar en BD (remover prefijos [PRINCIPAL] y [ALT])
-                consumido_nombre_limpio = consumido_nombre.replace("[PRINCIPAL] ", "").replace("[ALT] ", "")
+                # Limpiar nombre para guardar en BD (remover prefijo [ALT])
+                consumido_nombre_limpio = consumido_nombre.replace("[ALT] ", "")
                 
                 items_registro.append({
                     "alimento": alimento,
@@ -1472,7 +1471,9 @@ elif pagina == "Registros":
         
         if st.button("Guardar Registro"):
             if items_registro:
-                if guardar_registro_nutricion(fecha, hora, comida_tipo, st.session_state.dieta, items_registro, calcular_macros):
+                # Convertir comida_tipo a formato de BD (minúsculas, espacios a guiones bajos)
+                comida_tipo_bd = comida_tipo.lower().replace(" ", "_").replace("-", "_")
+                if guardar_registro_nutricion(fecha, hora, comida_tipo_bd, st.session_state.dieta, items_registro, calcular_macros):
                     st.success("✓ Registro guardado en BD")
                 else:
                     st.error("Error al guardar el registro")
