@@ -9,7 +9,7 @@ from db import (
     guardar_progreso_entrenamiento, obtener_progreso_entrenamiento,
     obtener_progreso_por_ejercicio, validar_cumplimiento_dia,
     guardar_configuracion, obtener_configuracion,
-    actualizar_registro_nutricion, eliminar_registro_nutricion, eliminar_comida_completa,
+    actualizar_registro_nutricion, eliminar_registro_nutricion,
     guardar_peso_diario, obtener_pesos_diarios, eliminar_peso_diario,
     actualizar_registro_entrenamiento, eliminar_registro_entrenamiento
 )
@@ -1559,23 +1559,6 @@ elif pagina == "Registros":
                         
                         # Sección de edición
                         with st.expander("✏️ Editar o eliminar registros"):
-                            # Opción para eliminar comida completa
-                            st.markdown("**🗑️ Eliminar comida completa:**")
-                            col_del1, col_del2 = st.columns([3, 1])
-                            with col_del1:
-                                st.info(f"Eliminar todos los alimentos de {comida_tipo} de {fecha}")
-                            with col_del2:
-                                # Crear key única combinando fecha, comida_tipo y hash
-                                import hashlib
-                                key_hash = hashlib.md5(f"{fecha}{comida_tipo}eliminar".encode()).hexdigest()[:8]
-                                if st.button("Eliminar comida", key=f"del_comida_{key_hash}", type="secondary"):
-                                    if eliminar_comida_completa(fecha, comida_tipo.lower().replace(" ", "_")):
-                                        st.success(f"✓ {comida_tipo} eliminada")
-                                        st.rerun()
-                                    else:
-                                        st.error(f"Error al eliminar {comida_tipo}")
-                            
-                            st.divider()
                             st.markdown("**✏️ Editar alimentos individuales:**")
                             
                             for i, reg in enumerate(registros):
