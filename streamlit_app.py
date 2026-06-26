@@ -1596,13 +1596,21 @@ elif pagina == "Registros":
         from datetime import timedelta
         
         datos_grafica = []
-        for i in range(6, -1, -1):  # Últimos 7 días
+        mes_actual = None
+        
+        for i in range(7, 0, -1):  # Últimos 7 días (corrección de offset)
             fecha_grafica = (datetime.today() - timedelta(days=i)).strftime("%Y-%m-%d")
             cumple, detalles = validar_cumplimiento_dia(fecha_grafica, {})
             
+            fecha_obj = datetime.today() - timedelta(days=i)
             promedio_dia = detalles.get("promedio", 0) if detalles else 0
+            
+            # Guardar mes para mostrar después
+            if mes_actual is None:
+                mes_actual = fecha_obj.strftime("%b %Y")
+            
             datos_grafica.append({
-                "Fecha": (datetime.today() - timedelta(days=i)).strftime("%d/%m"),
+                "Día": fecha_obj.strftime("%d"),
                 "Cumplimiento %": float(promedio_dia) if promedio_dia else 0
             })
         
@@ -1611,8 +1619,9 @@ elif pagina == "Registros":
         if df_grafica["Cumplimiento %"].sum() > 0:
             fig = go.Figure(data=[
                 go.Bar(
-                    x=df_grafica["Fecha"],
+                    x=df_grafica["Día"],
                     y=df_grafica["Cumplimiento %"],
+                    width=0.4,  # Barras delgadas
                     marker=dict(
                         color=df_grafica["Cumplimiento %"],
                         colorscale=[[0, '#F5E6D3'], [0.85, '#D4E0C9'], [0.86, '#A8B894'], [1, '#A8B894']],
@@ -1626,15 +1635,27 @@ elif pagina == "Registros":
             
             fig.update_layout(
                 title=None,
-                xaxis_title="Fecha",
+                xaxis_title=None,  # Omitir "Fecha"
                 yaxis_title="Cumplimiento %",
-                height=300,
+                height=160,  # Reducida a casi la mitad
                 showlegend=False,
                 hovermode="x unified",
-                margin=dict(l=40, r=40, t=40, b=40),
-                template="plotly_white"
+                margin=dict(l=40, r=40, t=40, b=30),
+                template="plotly_white",
+                # Agregar mes en esquina superior derecha
+                annotations=[
+                    dict(
+                        text=mes_actual,
+                        xref="paper", yref="paper",
+                        x=0.98, y=0.98,
+                        showarrow=False,
+                        xanchor="right", yanchor="top",
+                        font=dict(size=10, color="rgba(100, 100, 100, 0.3)")
+                    )
+                ]
             )
             fig.update_yaxes(range=[0, 100])
+            fig.update_xaxes(showgrid=False)
             
             st.plotly_chart(fig, use_container_width=True)
         else:
