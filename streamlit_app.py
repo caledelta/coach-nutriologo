@@ -1375,30 +1375,16 @@ elif pagina == "Registros":
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            # Usar fecha UTC del servidor
             from datetime import datetime as dt, timedelta as td
             hoy_servidor = dt.utcnow().date()
+            fecha_min = hoy_servidor - td(days=30)
             
-            # Generar lista de fechas válidas (hoy + 30 días atrás)
-            fechas_validas = [hoy_servidor - td(days=i) for i in range(31)]
-            fechas_validas.reverse()  # Orden ascendente (más antigua primero)
-            
-            # Crear labels más legibles
-            fecha_labels = [
-                f"{f.strftime('%d/%m/%Y')} ({('Hoy' if f == hoy_servidor else f'Hace {(hoy_servidor - f).days} días')})"
-                for f in fechas_validas
-            ]
-            
-            # Selectbox en lugar de date_input
-            idx_hoy = fechas_validas.index(hoy_servidor)
-            fecha_seleccionada = st.selectbox(
-                "Fecha",
-                options=range(len(fechas_validas)),
-                format_func=lambda i: fecha_labels[i],
-                index=idx_hoy,
-                key="fecha_nut_select"
+            fecha = st.date_input(
+                "Fecha", 
+                value=hoy_servidor,
+                min_value=fecha_min,
+                key="fecha_nut_input"
             )
-            fecha = fechas_validas[fecha_seleccionada]
         with col2:
             comida_tipo = st.selectbox("Comida", ["Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Pre-dormir"])
         with col3:
