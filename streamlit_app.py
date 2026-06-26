@@ -1376,7 +1376,8 @@ elif pagina == "Registros":
         col1, col2, col3 = st.columns(3)
         with col1:
             # Restricción: solo hoy y hasta 30 días atrás
-            hoy = datetime.today().date()
+            from datetime import date as date_class
+            hoy = date_class.today()
             fecha_min = hoy - timedelta(days=30)
             fecha = st.date_input(
                 "Fecha", 
@@ -1479,7 +1480,13 @@ elif pagina == "Registros":
                 })
         
         if st.button("Guardar Registro"):
-            if items_registro:
+            from datetime import date as date_class
+            hoy = date_class.today()
+            
+            # Validar que fecha no sea futura
+            if fecha > hoy:
+                st.error(f"❌ No puedes registrar una fecha futura. Hoy es {hoy}")
+            elif items_registro:
                 # Convertir comida_tipo a formato de BD (minúsculas, espacios a guiones bajos)
                 comida_tipo_bd = comida_tipo.lower().replace(" ", "_").replace("-", "_")
                 
