@@ -1563,10 +1563,10 @@ elif pagina == "Registros":
                             st.markdown("**🗑️ Eliminar comida completa:**")
                             col_del1, col_del2 = st.columns([3, 1])
                             with col_del1:
-                                st.info(f"Eliminar todos los alimentos de {comida_tipo} de {fecha_fecha}")
+                                st.info(f"Eliminar todos los alimentos de {comida_tipo} de {fecha}")
                             with col_del2:
-                                if st.button("Eliminar comida", key=f"eliminar_comida_{fecha_fecha}_{comida_tipo}", type="secondary"):
-                                    if eliminar_comida_completa(fecha_fecha, comida_tipo.lower().replace(" ", "_")):
+                                if st.button("Eliminar comida", key=f"eliminar_comida_{fecha}_{comida_tipo}", type="secondary"):
+                                    if eliminar_comida_completa(fecha, comida_tipo.lower().replace(" ", "_")):
                                         st.success(f"✓ {comida_tipo} eliminada")
                                         st.rerun()
                                     else:
