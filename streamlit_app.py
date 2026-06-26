@@ -1596,18 +1596,13 @@ elif pagina == "Registros":
         from datetime import timedelta
         
         datos_grafica = []
-        mes_actual = None
         
-        for i in range(7, 0, -1):  # Últimos 7 días (corrección de offset)
+        for i in range(7, 0, -1):  # Últimos 7 días
             fecha_grafica = (datetime.today() - timedelta(days=i)).strftime("%Y-%m-%d")
             cumple, detalles = validar_cumplimiento_dia(fecha_grafica, {})
             
             fecha_obj = datetime.today() - timedelta(days=i)
             promedio_dia = detalles.get("promedio", 0) if detalles else 0
-            
-            # Guardar mes para mostrar después
-            if mes_actual is None:
-                mes_actual = fecha_obj.strftime("%b %Y")
             
             datos_grafica.append({
                 "Día": fecha_obj.strftime("%d"),
@@ -1621,41 +1616,41 @@ elif pagina == "Registros":
                 go.Bar(
                     x=df_grafica["Día"],
                     y=df_grafica["Cumplimiento %"],
-                    width=0.4,  # Barras delgadas
+                    width=0.5,
                     marker=dict(
                         color=df_grafica["Cumplimiento %"],
                         colorscale=[[0, '#F5E6D3'], [0.85, '#D4E0C9'], [0.86, '#A8B894'], [1, '#A8B894']],
-                        showscale=False
+                        showscale=False,
+                        line=dict(width=0)
                     ),
                     text=df_grafica["Cumplimiento %"].round(0).astype(str) + "%",
-                    textposition="outside",
-                    hovertemplate="<b>%{x}</b><br>Cumplimiento: %{y:.1f}%<extra></extra>"
+                    textposition="inside",
+                    textfont=dict(size=11, color="white"),
+                    hovertemplate="Día %{x}<br>Cumplimiento: %{y:.1f}%<extra></extra>"
                 )
             ])
             
+            # Mes para el título
+            mes_hoy = datetime.today().strftime("%B %Y")
+            
             fig.update_layout(
-                title=None,
-                xaxis_title=None,  # Omitir "Fecha"
-                yaxis_title="Cumplimiento %",
-                height=160,  # Reducida a casi la mitad
+                title=dict(
+                    text=f"<i style='font-size:11px; color:#999; font-weight:normal'>{mes_hoy}</i>",
+                    x=0.5,
+                    xanchor="center",
+                    y=0.98,
+                    yanchor="top"
+                ),
+                xaxis_title=None,
+                yaxis_title=None,
+                height=180,
                 showlegend=False,
                 hovermode="x unified",
-                margin=dict(l=40, r=40, t=40, b=30),
-                template="plotly_white",
-                # Agregar mes en esquina superior derecha
-                annotations=[
-                    dict(
-                        text=mes_actual,
-                        xref="paper", yref="paper",
-                        x=0.98, y=0.98,
-                        showarrow=False,
-                        xanchor="right", yanchor="top",
-                        font=dict(size=10, color="rgba(100, 100, 100, 0.3)")
-                    )
-                ]
+                margin=dict(l=20, r=20, t=35, b=20),
+                template="plotly_white"
             )
-            fig.update_yaxes(range=[0, 100])
-            fig.update_xaxes(showgrid=False)
+            fig.update_yaxes(range=[0, 100], showticklabels=False, showgrid=False, zeroline=False)
+            fig.update_xaxes(showgrid=False, showline=False)
             
             st.plotly_chart(fig, use_container_width=True)
         else:
