@@ -356,6 +356,28 @@ def actualizar_registro_nutricion(registro_id, gramos_consumido, calcular_macros
             conn.close()
         return False
 
+def eliminar_comida_completa(fecha, comida_tipo):
+    """Eliminar todos los registros de una comida en una fecha específica"""
+    conn = get_connection()
+    if not conn:
+        return False
+    
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                "DELETE FROM registros_nutricion WHERE usuario_id = 1 AND fecha = %s AND comida = %s",
+                (fecha, comida_tipo)
+            )
+        
+        conn.commit()
+        conn.close()
+        return True
+    except psycopg2.Error as e:
+        st.error(f"Error al eliminar comida: {e}")
+        if conn:
+            conn.close()
+        return False
+
 def eliminar_registro_nutricion(registro_id):
     """Eliminar un registro de nutrición"""
     conn = get_connection()
