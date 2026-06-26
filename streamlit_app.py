@@ -1470,10 +1470,19 @@ elif pagina == "Registros":
                 })
         
         if st.button("Guardar Registro"):
+            st.write(f"DEBUG: items_registro tiene {len(items_registro)} items")
+            st.write(f"DEBUG: items_registro = {items_registro}")
+            
             if items_registro:
                 # Convertir comida_tipo a formato de BD (minúsculas, espacios a guiones bajos)
                 comida_tipo_bd = comida_tipo.lower().replace(" ", "_").replace("-", "_")
-                if guardar_registro_nutricion(fecha, hora, comida_tipo_bd, st.session_state.dieta, items_registro, calcular_macros):
+                st.write(f"DEBUG: comida_tipo_bd = {comida_tipo_bd}")
+                st.write(f"DEBUG: dieta = {st.session_state.dieta}")
+                
+                result = guardar_registro_nutricion(fecha, hora, comida_tipo_bd, st.session_state.dieta, items_registro, calcular_macros)
+                st.write(f"DEBUG: resultado guardar = {result}")
+                
+                if result:
                     st.success("✓ Registro guardado en BD")
                 else:
                     st.error("Error al guardar el registro")
