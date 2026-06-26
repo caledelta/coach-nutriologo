@@ -1595,6 +1595,13 @@ elif pagina == "Registros":
         
         from datetime import timedelta
         
+        # Diccionario de meses en español
+        meses_es = {
+            1: "Enero", 2: "Febrero", 3: "Marzo", 4: "Abril",
+            5: "Mayo", 6: "Junio", 7: "Julio", 8: "Agosto",
+            9: "Septiembre", 10: "Octubre", 11: "Noviembre", 12: "Diciembre"
+        }
+        
         datos_grafica = []
         
         for i in range(7, 0, -1):  # Últimos 7 días
@@ -1625,17 +1632,19 @@ elif pagina == "Registros":
                     ),
                     text=df_grafica["Cumplimiento %"].round(0).astype(str) + "%",
                     textposition="inside",
-                    textfont=dict(size=11, color="white"),
+                    textfont=dict(size=14, color="white"),
                     hovertemplate="Día %{x}<br>Cumplimiento: %{y:.1f}%<extra></extra>"
                 )
             ])
             
-            # Mes para el título
-            mes_hoy = datetime.today().strftime("%B %Y")
+            # Mes en español
+            mes_numero = datetime.today().month
+            año = datetime.today().year
+            mes_hoy = f"{meses_es[mes_numero]} {año}"
             
             fig.update_layout(
                 title=dict(
-                    text=f"<i style='font-size:11px; color:#999; font-weight:normal'>{mes_hoy}</i>",
+                    text=f"<i style='font-size:16px; color:#666; font-weight:normal'>{mes_hoy}</i>",
                     x=0.5,
                     xanchor="center",
                     y=0.98,
@@ -1646,11 +1655,26 @@ elif pagina == "Registros":
                 height=180,
                 showlegend=False,
                 hovermode="x unified",
-                margin=dict(l=20, r=20, t=35, b=20),
+                margin=dict(l=30, r=20, t=40, b=25),
                 template="plotly_white"
             )
-            fig.update_yaxes(range=[0, 100], showticklabels=False, showgrid=False, zeroline=False)
-            fig.update_xaxes(showgrid=False, showline=False)
+            fig.update_yaxes(
+                range=[0, 100], 
+                showticklabels=False, 
+                showgrid=True,
+                gridwidth=1,
+                gridcolor="rgba(200, 200, 200, 0.2)",
+                showline=True,
+                linewidth=1,
+                linecolor="rgba(150, 150, 150, 0.3)",
+                zeroline=False
+            )
+            fig.update_xaxes(
+                showgrid=False, 
+                showline=True,
+                linewidth=1,
+                linecolor="rgba(150, 150, 150, 0.3)"
+            )
             
             st.plotly_chart(fig, use_container_width=True)
         else:
