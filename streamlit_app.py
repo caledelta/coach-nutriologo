@@ -1376,13 +1376,13 @@ elif pagina == "Registros":
         col1, col2, col3 = st.columns(3)
         with col1:
             # Restricción: solo hoy y hasta 30 días atrás
-            fecha_min = datetime.today() - timedelta(days=30)
-            fecha_max = datetime.today()
+            hoy = datetime.today().date()
+            fecha_min = hoy - timedelta(days=30)
             fecha = st.date_input(
                 "Fecha", 
-                datetime.today(), 
+                hoy, 
                 min_value=fecha_min,
-                max_value=fecha_max,
+                max_value=hoy,
                 key="fecha_nut"
             )
         with col2:
@@ -1565,7 +1565,10 @@ elif pagina == "Registros":
                             with col_del1:
                                 st.info(f"Eliminar todos los alimentos de {comida_tipo} de {fecha}")
                             with col_del2:
-                                if st.button("Eliminar comida", key=f"eliminar_comida_{fecha}_{comida_tipo}", type="secondary"):
+                                # Crear key única combinando fecha, comida_tipo y hash
+                                import hashlib
+                                key_hash = hashlib.md5(f"{fecha}{comida_tipo}eliminar".encode()).hexdigest()[:8]
+                                if st.button("Eliminar comida", key=f"del_comida_{key_hash}", type="secondary"):
                                     if eliminar_comida_completa(fecha, comida_tipo.lower().replace(" ", "_")):
                                         st.success(f"✓ {comida_tipo} eliminada")
                                         st.rerun()
