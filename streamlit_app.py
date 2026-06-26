@@ -1383,7 +1383,8 @@ elif pagina == "Registros":
                 "Fecha", 
                 value=hoy_servidor,
                 min_value=fecha_min,
-                key="fecha_nut_input"
+                max_value=hoy_servidor,
+                key="fecha_registro_nutricion"
             )
         with col2:
             comida_tipo = st.selectbox("Comida", ["Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Pre-dormir"])
