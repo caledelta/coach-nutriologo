@@ -1376,16 +1376,24 @@ elif pagina == "Registros":
         col1, col2, col3 = st.columns(3)
         with col1:
             # Restricción: solo hoy y hasta 30 días atrás
-            from datetime import date as date_class
+            from datetime import date as date_class, timedelta as td
             hoy = date_class.today()
-            fecha_min = hoy - timedelta(days=30)
+            fecha_min = hoy - td(days=30)
+            
+            # Mostrar advertencia si intentas seleccionar futuro
             fecha = st.date_input(
                 "Fecha", 
-                hoy, 
+                value=hoy,
                 min_value=fecha_min,
                 max_value=hoy,
-                key="fecha_nut"
+                key="fecha_nut_input"
             )
+            
+            # Validar inmediatamente si es futura
+            if fecha > hoy:
+                st.warning(f"⚠️ Seleccionaste {fecha} pero hoy es {hoy}")
+                fecha = hoy  # Forzar a hoy
+                st.rerun()
         with col2:
             comida_tipo = st.selectbox("Comida", ["Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Pre-dormir"])
         with col3:
@@ -1485,7 +1493,8 @@ elif pagina == "Registros":
             
             # Validar que fecha no sea futura
             if fecha > hoy:
-                st.error(f"❌ No puedes registrar una fecha futura. Hoy es {hoy}")
+                st.error(f"❌ No puedes registrar una fecha futura. Hoy es {hoy}, seleccionaste {fecha}")
+                st.stop()
             elif items_registro:
                 # Convertir comida_tipo a formato de BD (minúsculas, espacios a guiones bajos)
                 comida_tipo_bd = comida_tipo.lower().replace(" ", "_").replace("-", "_")
