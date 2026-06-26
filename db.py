@@ -50,8 +50,17 @@ def get_connection():
 
 # ========== REGISTROS DE NUTRICIÓN ==========
 
-def guardar_registro_nutricion(fecha, hora, comida, dieta, items_con_recomendado, calcular_macros_fn):
-    """Guardar registro de nutrición en BD con dieta, alternativa y macronutrientes"""
+def guardar_registro_nutricion(fecha, hora, comida_tipo, dieta, items_con_recomendado, calcular_macros_fn):
+    """Guardar registro de nutrición en BD con dieta, alternativa y macronutrientes
+    
+    Args:
+        fecha: fecha del registro
+        hora: hora del registro (formato time)
+        comida_tipo: tipo de comida (ej: 'desayuno', 'comida', 'pre_dormir')
+        dieta: nombre de la dieta (ej: 'Pollo', 'Carnes Rojas')
+        items_con_recomendado: lista de dicts con {'alimento', 'recomendado', 'consumido', 'consumido_nombre'}
+        calcular_macros_fn: función para calcular macros
+    """
     conn = get_connection()
     if not conn:
         st.error("No se pudo conectar a la base de datos")
@@ -77,7 +86,7 @@ def guardar_registro_nutricion(fecha, hora, comida, dieta, items_con_recomendado
                      alternativa, gramos_recomendado, gramos_consumido, porcentaje_cumplimiento,
                      kcal, proteina_g, carbos_g, grasas_g)
                     VALUES (1, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                """, (fecha, hora, comida, dieta, item['alimento'], item['consumido_nombre'], 
+                """, (fecha, hora, comida_tipo, dieta, item['alimento'], item['consumido_nombre'], 
                       es_alternativa, gramos_recomendado, gramos_consumido, porcentaje,
                       macros['kcal'], macros['p'], macros['c'], macros['g']))
         
