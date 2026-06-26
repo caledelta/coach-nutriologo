@@ -1371,7 +1371,7 @@ elif pagina == "Registros":
     
     with tab_nut:
         st.markdown("### Registrar Consumo Nutricional")
-        st.markdown("<p style='color: #A8B894; font-size: 0.9rem; margin: 5px 0 15px 0;'>Nombre | <b style='color: #A8B894;'>[ALT]</b> Alternativas disponibles</p>", unsafe_allow_html=True)
+        st.markdown("<p style='color: #A8B894; font-size: 0.9rem; margin: 5px 0 15px 0;'>Selecciona el alimento consumido (principal u alternativa) y registra la cantidad</p>", unsafe_allow_html=True)
         
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -1421,36 +1421,36 @@ elif pagina == "Registros":
                 # Obtener alternativas si existen
                 alternativas_disp = comida_info.get('alternativas', {}).get(alimento, [])
                 
-                # Crear lista de opciones: principal sin prefijo, alternativas con [ALT]
-                opciones = [alimento]  # Alimento principal SIN prefijo
-                
-                # Agregar alternativas si existen
-                if alternativas_disp:
-                    for alt in alternativas_disp:
-                        if "(alt. a" in alt:
-                            nombre_alt = alt.split(" (alt. a")[0]
-                        else:
-                            nombre_alt = alt
-                        # Agregar solo [ALT] para alternativas
-                        opciones.append(f"[ALT] {nombre_alt}")
-                
-                # Indicador de opciones disponibles
-                num_opciones = len(opciones)
-                badge = "" if num_opciones == 1 else f" +{num_opciones-1}"
+                # Extraer nombres limpios de alternativas
+                alts_limpias = [alt.split(" (alt. a")[0] if "(alt. a" in alt else alt for alt in alternativas_disp]
+                opciones_completas = [alimento] + alts_limpias
                 
                 with col_a:
-                    consumido_nombre = st.selectbox(
-                        f"Consumido (de {alimento}){badge}", 
-                        opciones,
-                        key=f"reg_{comida_key}_{alimento}"
-                    )
+                    st.markdown(f"**{alimento}**")
                     
-                    # Mostrar alternativas disponibles si existen
-                    if alternativas_disp:
-                        alts_txt = ", ".join([alt.split(" (alt. a")[0] if "(alt. a" in alt else alt for alt in alternativas_disp])
-                        st.caption(f"Alternativas disponibles: {alts_txt}")
+                    # Radio buttons: principal + alternativas - VISIBLE Y SELECCIONABLE
+                    if alts_limpias:
+                        # Si hay alternativas, mostrar como radio buttons
+                        consumido_nombre = st.radio(
+                            f"Consumido (de {alimento})",
+                            options=opciones_completas,
+                            index=0,
+                            key=f"radio_{comida_key}_{alimento}",
+                            label_visibility="collapsed",
+                            horizontal=True
+                        )
+                    else:
+                        # Si no hay alternativas, simple selectbox
+                        consumido_nombre = st.selectbox(
+                            f"Consumido (de {alimento})",
+                            [alimento],
+                            key=f"sel_{comida_key}_{alimento}",
+                            label_visibility="collapsed"
+                        )
+                
                 with col_b:
                     st.text(f"{cantidad} {unidad}")
+                
                 with col_c:
                     consumido = st.number_input(
                         f"Consumo", 
@@ -1459,8 +1459,8 @@ elif pagina == "Registros":
                         label_visibility="collapsed"
                     )
                 
-                # Limpiar nombre para guardar en BD (remover prefijo [ALT])
-                consumido_nombre_limpio = consumido_nombre.replace("[ALT] ", "")
+                # Limpiar nombre para guardar en BD
+                consumido_nombre_limpio = consumido_nombre
                 
                 items_registro.append({
                     "alimento": alimento,
@@ -1470,24 +1470,16 @@ elif pagina == "Registros":
                 })
         
         if st.button("Guardar Registro"):
-            st.write(f"DEBUG: items_registro tiene {len(items_registro)} items")
-            st.write(f"DEBUG: items_registro = {items_registro}")
-            
             if items_registro:
                 # Convertir comida_tipo a formato de BD (minúsculas, espacios a guiones bajos)
                 comida_tipo_bd = comida_tipo.lower().replace(" ", "_").replace("-", "_")
-                st.write(f"DEBUG: comida_tipo_bd = {comida_tipo_bd}")
-                st.write(f"DEBUG: dieta = {st.session_state.dieta}")
                 
-                result = guardar_registro_nutricion(fecha, hora, comida_tipo_bd, st.session_state.dieta, items_registro, calcular_macros)
-                st.write(f"DEBUG: resultado guardar = {result}")
-                
-                if result:
-                    st.success("✓ Registro guardado en BD")
+                if guardar_registro_nutricion(fecha, hora, comida_tipo_bd, st.session_state.dieta, items_registro, calcular_macros):
+                    st.success("✓ Registro guardado exitosamente en la base de datos")
                 else:
-                    st.error("Error al guardar el registro")
+                    st.error("❌ Error al guardar. Verifica la conexión a la BD")
             else:
-                st.warning("Selecciona una comida válida")
+                st.warning("⚠️ Selecciona una comida válida para registrar")
         
         st.divider()
         
