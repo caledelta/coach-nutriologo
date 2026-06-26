@@ -1375,24 +1375,24 @@ elif pagina == "Registros":
         
         col1, col2, col3 = st.columns(3)
         with col1:
-            # Restricción: solo hoy y hasta 30 días atrás
-            from datetime import date as date_class, timedelta as td
-            hoy = date_class.today()
-            fecha_min = hoy - td(days=30)
+            # Restricción: usar fecha UTC del servidor como "hoy"
+            from datetime import datetime as dt, timedelta as td
+            hoy_servidor = dt.utcnow().date()
+            fecha_min = hoy_servidor - td(days=30)
             
             # Mostrar advertencia si intentas seleccionar futuro
             fecha = st.date_input(
                 "Fecha", 
-                value=hoy,
+                value=hoy_servidor,
                 min_value=fecha_min,
-                max_value=hoy,
+                max_value=hoy_servidor,
                 key="fecha_nut_input"
             )
             
             # Validar inmediatamente si es futura
-            if fecha > hoy:
-                st.warning(f"⚠️ Seleccionaste {fecha} pero hoy es {hoy}")
-                fecha = hoy  # Forzar a hoy
+            if fecha > hoy_servidor:
+                st.error(f"❌ No puedes registrar fecha futura. Hoy es {hoy_servidor}")
+                fecha = hoy_servidor  # Forzar a hoy
                 st.rerun()
         with col2:
             comida_tipo = st.selectbox("Comida", ["Desayuno", "Media mañana", "Comida", "Merienda", "Cena", "Pre-dormir"])
@@ -1488,12 +1488,12 @@ elif pagina == "Registros":
                 })
         
         if st.button("Guardar Registro"):
-            from datetime import date as date_class
-            hoy = date_class.today()
+            from datetime import datetime as dt
+            hoy_servidor = dt.utcnow().date()
             
             # Validar que fecha no sea futura
-            if fecha > hoy:
-                st.error(f"❌ No puedes registrar una fecha futura. Hoy es {hoy}, seleccionaste {fecha}")
+            if fecha > hoy_servidor:
+                st.error(f"❌ No puedes registrar una fecha futura. Hoy (servidor UTC) es {hoy_servidor}, seleccionaste {fecha}")
                 st.stop()
             elif items_registro:
                 # Convertir comida_tipo a formato de BD (minúsculas, espacios a guiones bajos)
